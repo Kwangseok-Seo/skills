@@ -1,0 +1,25 @@
+{
+  "name": "kwangseok-seo-skills",
+  "version": "0.1.0",
+  "description": "Curated Claude Code skills with Korean and English variants. Starts with `dream` — a memory consolidation pass.",
+  "author": {
+    "name": "Kwangseok-Seo",
+    "email": "adman1219@icloud.com",
+    "url": "https://github.com/Kwangseok-Seo"
+  },
+  "homepage": "https://github.com/Kwangseok-Seo/skills",
+  "repository": "https://github.com/Kwangseok-Seo/skills",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "memory",
+    "consolidation",
+    "korean",
+    "ko-en"
+  ],
+  "skills": [
+    "./skills/dream",
+    "./skills/dream-ko"
+  ]
+}
