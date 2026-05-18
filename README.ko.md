@@ -1,6 +1,6 @@
 # skills
 
-> 다국어 Claude Code skills 모음. 첫 스킬은 `dream` — 메모리 통합 pass.
+> 다국어 Claude Code skills 모음. 메모리 통합용 `dream`, 이어받기 가능한 세션 봉인용 `session-seal`.
 
 [Claude Code](https://docs.claude.com/en/docs/claude-code) 용 skills 모음을 단일 plugin 으로 publish 한 저장소. 각 skill 은 영어판과 한국어판 두 변형으로 제공되어, 실제로 에이전트에게 말하는 언어에 맞춰 깔끔하게 트리거된다.
 
@@ -17,18 +17,34 @@ Claude Code 안에서 이 repo 를 plugin marketplace 로 추가하고 install:
 
 또는 skills 디렉토리를 수동 복사:
 
+bash (macOS / Linux / Git Bash):
+
 ```bash
 git clone https://github.com/Kwangseok-Seo/skills.git
-cp -r skills/skills/dream     ~/.claude/skills/dream
-cp -r skills/skills/dream-ko  ~/.claude/skills/dream-ko
+cp -r skills/skills/dream            ~/.claude/skills/dream
+cp -r skills/skills/dream-ko         ~/.claude/skills/dream-ko
+cp -r skills/skills/session-seal     ~/.claude/skills/session-seal
+cp -r skills/skills/session-seal-ko  ~/.claude/skills/session-seal-ko
+```
+
+PowerShell (Windows):
+
+```powershell
+git clone https://github.com/Kwangseok-Seo/skills.git
+Copy-Item -Recurse skills/skills/dream            ~/.claude/skills/dream
+Copy-Item -Recurse skills/skills/dream-ko         ~/.claude/skills/dream-ko
+Copy-Item -Recurse skills/skills/session-seal     ~/.claude/skills/session-seal
+Copy-Item -Recurse skills/skills/session-seal-ko  ~/.claude/skills/session-seal-ko
 ```
 
 ## 제공 Skills
 
-| Skill       | 언어 | 설명                                                          |
-|-------------|:----:|---------------------------------------------------------------|
-| `dream`     | en   | `~/.claude/memory/` 에 대한 메모리 통합 pass                  |
-| `dream-ko`  | ko   | `dream` 의 한국어 변형                                        |
+| Skill              | 언어 | 설명                                                                                |
+|--------------------|:----:|-------------------------------------------------------------------------------------|
+| `dream`            | en   | `~/.claude/memory/` 에 대한 메모리 통합 pass                                        |
+| `dream-ko`         | ko   | `dream` 의 한국어 변형                                                              |
+| `session-seal`     | en   | 현재 세션을 `<cwd>/.claude/sessions/<제목>.md` 로 Why/How frontmatter 와 함께 봉인  |
+| `session-seal-ko`  | ko   | `session-seal` 의 한국어 변형                                                       |
 
 ### `dream` 이 무엇을 하는가
 
@@ -46,6 +62,20 @@ cp -r skills/skills/dream-ko  ~/.claude/skills/dream-ko
 | (없음)   | 현재 프로젝트 메모리 디렉토리                                     |
 | `user`   | `~/.claude/memory/` (cross-project 신호만)                        |
 | `all`    | `user` 패스 + 모든 프로젝트 메모리 디렉토리 각각 1회씩            |
+
+### `session-seal` 이 무엇을 하는가
+
+`session-seal` 도 **수동** 이다. 호출하면 (예: `/session-seal`, "이 세션 봉인해줘") 에이전트가:
+
+1. **Locate** — `~/.claude/projects/` 에서 현재 세션의 활성 JSONL transcript 를 찾는다.
+2. **Convert** — 동봉된 `convert_transcript.py` 로 읽기 좋은 markdown 으로 변환.
+3. **Scan** — 저장 디렉토리의 최근 sealed 스냅샷 3개의 frontmatter 만 스캔해 chain 후보를 본다.
+4. **Propose** — Why / How / 파일명 / tags / chain 링크를 한 번의 라운드에 제시하고 사용자 확인을 기다린다.
+5. **Write** — `<cwd>/.claude/sessions/YYYY-MM-DD - {짧은 why}.md` 로 봉인 파일을 쓴다. 본문은 원본 대화 그대로.
+
+Why / How 는 미래 세션이 즉시 이어받게 해주는 두 줄 abstraction — `Why` 는 세션의 의도, `How` 는 접근. `continues-why` / `continues-how` 는 그 의도/접근이 이어지는 직전 sealed 스냅샷으로의 옵션 wikilink.
+
+스냅샷을 다른 곳 (예: 개인 위키) 에 두려면 환경변수 `SESSION_SEAL_DIR` 을 설정. 새 세션 시작 시 자동 주입은 단순함을 위해 포함하지 않음 — 원하면 skill 의 "커스터마이즈" 섹션 참조.
 
 ## 왜 ko / en 을 따로 분리했나?
 
