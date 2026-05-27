@@ -1,7 +1,7 @@
 {
   "name": "kwangseok-seo-skills",
   "version": "0.1.0",
-  "description": "Curated Claude Code skills with Korean and English variants. Includes `dream` (memory consolidation pass) and `session-seal` (resumable session snapshots).",
+  "description": "Curated Claude Code skills with Korean and English variants. Includes `dream` (memory consolidation pass), `session-seal` (resumable session snapshots), and `to-html` (gated HTML visualization of content).",
   "author": {
     "name": "Kwangseok-Seo",
     "email": "adman1219@icloud.com",
@@ -17,6 +17,8 @@
     "consolidation",
     "session",
     "snapshot",
+    "html",
+    "visualization",
     "korean",
     "ko-en"
   ],
@@ -24,6 +26,8 @@
     "./skills/dream",
     "./skills/dream-ko",
     "./skills/session-seal",
-    "./skills/session-seal-ko"
+    "./skills/session-seal-ko",
+    "./skills/to-html",
+    "./skills/to-html-ko"
   ]
 }

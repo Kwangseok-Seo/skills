@@ -1,6 +1,6 @@
 # skills
 
-> 다국어 Claude Code skills 모음. 메모리 통합용 `dream`, 이어받기 가능한 세션 봉인용 `session-seal`.
+> 다국어 Claude Code skills 모음. 메모리 통합용 `dream`, 이어받기 가능한 세션 봉인용 `session-seal`, 가치 판정 후 HTML 시각화 변환용 `to-html`.
 
 [Claude Code](https://docs.claude.com/en/docs/claude-code) 용 skills 모음을 단일 plugin 으로 publish 한 저장소. 각 skill 은 영어판과 한국어판 두 변형으로 제공되어, 실제로 에이전트에게 말하는 언어에 맞춰 깔끔하게 트리거된다.
 
@@ -25,6 +25,8 @@ cp -r skills/skills/dream            ~/.claude/skills/dream
 cp -r skills/skills/dream-ko         ~/.claude/skills/dream-ko
 cp -r skills/skills/session-seal     ~/.claude/skills/session-seal
 cp -r skills/skills/session-seal-ko  ~/.claude/skills/session-seal-ko
+cp -r skills/skills/to-html          ~/.claude/skills/to-html
+cp -r skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 ```
 
 PowerShell (Windows):
@@ -35,6 +37,8 @@ Copy-Item -Recurse skills/skills/dream            ~/.claude/skills/dream
 Copy-Item -Recurse skills/skills/dream-ko         ~/.claude/skills/dream-ko
 Copy-Item -Recurse skills/skills/session-seal     ~/.claude/skills/session-seal
 Copy-Item -Recurse skills/skills/session-seal-ko  ~/.claude/skills/session-seal-ko
+Copy-Item -Recurse skills/skills/to-html          ~/.claude/skills/to-html
+Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 ```
 
 ## 제공 Skills
@@ -45,6 +49,8 @@ Copy-Item -Recurse skills/skills/session-seal-ko  ~/.claude/skills/session-seal-
 | `dream-ko`         | ko   | `dream` 의 한국어 변형                                                              |
 | `session-seal`     | en   | 현재 세션을 `<cwd>/.claude/sessions/<제목>.md` 로 Why/How frontmatter 와 함께 봉인  |
 | `session-seal-ko`  | ko   | `session-seal` 의 한국어 변형                                                       |
+| `to-html`          | en   | 가치 판정 후 HTML 시각화 변환 (Compare / Tune / Learn 패턴, 토큰 비용 경고 포함)   |
+| `to-html-ko`       | ko   | `to-html` 의 한국어 변형                                                            |
 
 ### `dream` 이 무엇을 하는가
 
@@ -76,6 +82,18 @@ Copy-Item -Recurse skills/skills/session-seal-ko  ~/.claude/skills/session-seal-
 Why / How 는 미래 세션이 즉시 이어받게 해주는 두 줄 abstraction — `Why` 는 세션의 의도, `How` 는 접근. `continues-why` / `continues-how` 는 그 의도/접근이 이어지는 직전 sealed 스냅샷으로의 옵션 wikilink.
 
 스냅샷을 다른 곳 (예: 개인 위키) 에 두려면 환경변수 `SESSION_SEAL_DIR` 을 설정. 새 세션 시작 시 자동 주입은 단순함을 위해 포함하지 않음 — 원하면 skill 의 "커스터마이즈" 섹션 참조.
+
+### `to-html` 이 무엇을 하는가
+
+`to-html` 은 콘텐츠를 **단일 self-contained HTML 파일** 로 변환한다 — 단, *시각화가 실제로 가치를 더할 때만*. 실행하면 에이전트가:
+
+1. **입력 식별** — 파일 경로, 직전 assistant 응답, 붙여 넣은 텍스트를 받는다. 아무것도 주어지지 않으면 한 번만 묻는다.
+2. **분류 + 추산** — 콘텐츠를 세 패턴 중 하나로 분류(**Compare** 그리드 비교 / **Tune** 슬라이더로 값 조정 / **Learn** 다이어그램+코드+주의사항 한 페이지), 토큰 크기를 추산하고, HTML 출력이 보통 마크다운 대비 ~5배(Pascal Filiteri 측정) 라는 경고를 띄운다.
+3. **Gate** — 가치가 낮거나 어떤 패턴에도 안 맞으면 대안(마크다운 요약 / ASCII 표 / Mermaid 만 / 그대로 진행) 을 제시하고 **사용자 결정을 기다린다.** 조용히 fallback 하지 않는다.
+4. **도구 선호 한 번만 묻기** — 기본은 Tailwind CDN (+ 필요 시 Mermaid / Chart.js); 사용자가 명시한 도구셋(예: 오프라인용 inline-only) 우선.
+5. **HTML 파일 하나 쓰기** — `<cwd>/.claude/to-html/YYYY-MM-DD-HHmm-{슬러그}.html`. CDN 의존성만, 더블클릭으로 열림. **자동으로 열지 않는다.**
+
+저장 디렉토리는 환경변수 `TO_HTML_DIR` 로 override. 세 패턴과 5배 비용 경고 framing 은 Anthropic / Tariq Sipha 의 공개 가이드에서 직접 가져옴 — 스킬의 "출처" 섹션 참조.
 
 ## 왜 ko / en 을 따로 분리했나?
 
