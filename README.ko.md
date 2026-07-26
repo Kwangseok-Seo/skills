@@ -1,6 +1,6 @@
 # skills
 
-> 다국어 Claude Code skills 모음. 메모리 통합용 `dream`, 이어받기 가능한 세션 봉인용 `session-seal`, 가치 판정 후 HTML 시각화 변환용 `to-html`.
+> 다국어 Claude Code skills 모음. 메모리 통합용 `dream`, 이어받기 가능한 세션 봉인용 `session-seal`, GATE 기반 세션 회고용 `session-retro`, 가치 판정 후 HTML 시각화 변환용 `to-html`.
 
 [Claude Code](https://docs.claude.com/en/docs/claude-code) 용 skills 모음을 단일 plugin 으로 publish 한 저장소. 각 skill 은 영어판과 한국어판 두 변형으로 제공되어, 실제로 에이전트에게 말하는 언어에 맞춰 깔끔하게 트리거된다.
 
@@ -25,6 +25,8 @@ cp -r skills/skills/dream            ~/.claude/skills/dream
 cp -r skills/skills/dream-ko         ~/.claude/skills/dream-ko
 cp -r skills/skills/session-seal     ~/.claude/skills/session-seal
 cp -r skills/skills/session-seal-ko  ~/.claude/skills/session-seal-ko
+cp -r skills/skills/session-retro    ~/.claude/skills/session-retro
+cp -r skills/skills/session-retro-ko ~/.claude/skills/session-retro-ko
 cp -r skills/skills/to-html          ~/.claude/skills/to-html
 cp -r skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 ```
@@ -37,6 +39,8 @@ Copy-Item -Recurse skills/skills/dream            ~/.claude/skills/dream
 Copy-Item -Recurse skills/skills/dream-ko         ~/.claude/skills/dream-ko
 Copy-Item -Recurse skills/skills/session-seal     ~/.claude/skills/session-seal
 Copy-Item -Recurse skills/skills/session-seal-ko  ~/.claude/skills/session-seal-ko
+Copy-Item -Recurse skills/skills/session-retro    ~/.claude/skills/session-retro
+Copy-Item -Recurse skills/skills/session-retro-ko ~/.claude/skills/session-retro-ko
 Copy-Item -Recurse skills/skills/to-html          ~/.claude/skills/to-html
 Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 ```
@@ -49,6 +53,8 @@ Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 | `dream-ko`         | ko   | `dream` 의 한국어 변형                                                              |
 | `session-seal`     | en   | 현재 세션을 `<cwd>/.claude/sessions/<제목>.md` 로 Why/How frontmatter 와 함께 봉인  |
 | `session-seal-ko`  | ko   | `session-seal` 의 한국어 변형                                                       |
+| `session-retro`    | en   | GATE 기반 세션 회고 — rule 재사용 성적을 먼저 매기고 accept 된 것만 발행           |
+| `session-retro-ko` | ko   | `session-retro` 의 한국어 변형                                                      |
 | `to-html`          | en   | 가치 판정 후 HTML 시각화 변환 (Compare / Tune / Learn 패턴, 토큰 비용 경고 포함)   |
 | `to-html-ko`       | ko   | `to-html` 의 한국어 변형                                                            |
 
@@ -82,6 +88,20 @@ Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 Why / How 는 미래 세션이 즉시 이어받게 해주는 두 줄 abstraction — `Why` 는 세션의 의도, `How` 는 접근. `continues-why` / `continues-how` 는 그 의도/접근이 이어지는 직전 sealed 스냅샷으로의 옵션 wikilink.
 
 스냅샷을 다른 곳 (예: 개인 위키) 에 두려면 환경변수 `SESSION_SEAL_DIR` 을 설정. 새 세션 시작 시 자동 주입은 단순함을 위해 포함하지 않음 — 원하면 skill 의 "커스터마이즈" 섹션 참조.
+
+### `session-retro` 가 무엇을 하는가
+
+`session-retro` 는 세션을 닫기 전에 도는 **수동** 패스다. 세션 봉인도 함께 쓴다면 `/session-seal` **전**에 돈다. 실행하면 에이전트가:
+
+1. **재사용 성적을 먼저 매긴다** — 이번 세션에 적용됐을 rule 각각에 대해 *어디서 어떻게* 쓰였는지를 구체 사건으로 적고 작동/부분작동/미작동을 판정한다. 이 섹션이 첫 번째인 것은 의도적이다 — "또 rule 하나 늘리기"에 제동이 걸린다. 발행한 게 없는 첫 실행이면 한 줄로 그렇게 적고 넘어간다.
+2. **4축 × 2렌즈로 분석한다** — 잘한 것 / 실수한 것 / 어려웠던 것 / 배운 것을 엔지니어링·비즈니스 두 렌즈로. 모든 항목은 세션의 관찰 가능한 사건에 앵커해야 하고, **실수 축은 비울 수 없다.**
+3. **이진으로 판정한다** — 각 노드는 🟢 후보(rule / skill / guardrail) 아니면 **사유가 적힌** `미분류`. 강도 등급을 두지 않는다 — 낮게 매긴 항목이 "검토 완료" 착각과 함께 영구 매장되기 때문.
+4. **사람 GATE 에서 멈춘다** — 후보는 선택지 버튼이 아니라 **산문으로** 제시된다. 읽기가 강제돼야 거수기가 안 된다. 반려·문구 수정도 명시적으로 정당한 결과이고, 과거에 거절한 영역이면 그 사실을 후보 옆에 밝힌다.
+5. **accept 된 것만 발행한다** — rule 은 동봉된 `RULE-FORMAT.md` 를 따라 `~/.claude/rules/*.md` 로. 이 포맷은 *매 세션 컨텍스트에 실리는* 파일에 맞춰져 있다(목표 1.5~3K chars).
+
+동봉 파일: `RETRO-FORMAT.md`(출력 형태), `RULE-FORMAT.md`(rule 파일 형태), `examples/worked-example.md`(비식별화한 실제 회고 1패스 전문).
+
+`~/.claude/rules/` 를 자동으로 읽지 않는 환경이면 `~/.claude/CLAUDE.md` 등 상시 적재되는 자리에 발행한다 — 목적지만 바뀐다. 세션을 가로지르는 회고 코퍼스에 노드를 남기는 6단계는 선택이며 기본은 건너뛴다.
 
 ### `to-html` 이 무엇을 하는가
 

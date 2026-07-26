@@ -1,6 +1,6 @@
 # skills
 
-> Multilingual Claude Code skills. `dream` for memory consolidation, `session-seal` for resumable session snapshots, `to-html` for gated HTML visualization.
+> Multilingual Claude Code skills. `dream` for memory consolidation, `session-seal` for resumable session snapshots, `session-retro` for gated session retrospectives, `to-html` for gated HTML visualization.
 
 A small, opinionated collection of [Claude Code](https://docs.claude.com/en/docs/claude-code) skills published as a single plugin. Each skill ships in two language variants — English and Korean — so the one that matches how you actually talk to your agent triggers cleanly.
 
@@ -25,6 +25,8 @@ cp -r skills/skills/dream            ~/.claude/skills/dream
 cp -r skills/skills/dream-ko         ~/.claude/skills/dream-ko
 cp -r skills/skills/session-seal     ~/.claude/skills/session-seal
 cp -r skills/skills/session-seal-ko  ~/.claude/skills/session-seal-ko
+cp -r skills/skills/session-retro    ~/.claude/skills/session-retro
+cp -r skills/skills/session-retro-ko ~/.claude/skills/session-retro-ko
 cp -r skills/skills/to-html          ~/.claude/skills/to-html
 cp -r skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 ```
@@ -37,6 +39,8 @@ Copy-Item -Recurse skills/skills/dream            ~/.claude/skills/dream
 Copy-Item -Recurse skills/skills/dream-ko         ~/.claude/skills/dream-ko
 Copy-Item -Recurse skills/skills/session-seal     ~/.claude/skills/session-seal
 Copy-Item -Recurse skills/skills/session-seal-ko  ~/.claude/skills/session-seal-ko
+Copy-Item -Recurse skills/skills/session-retro    ~/.claude/skills/session-retro
+Copy-Item -Recurse skills/skills/session-retro-ko ~/.claude/skills/session-retro-ko
 Copy-Item -Recurse skills/skills/to-html          ~/.claude/skills/to-html
 Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 ```
@@ -49,6 +53,8 @@ Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 | `dream-ko`         | ko   | Korean variant of `dream`                                                         |
 | `session-seal`     | en   | Seal the current session as `<cwd>/.claude/sessions/<title>.md` with Why/How      |
 | `session-seal-ko`  | ko   | Korean variant of `session-seal`                                                  |
+| `session-retro`    | en   | Gated session retrospective — scores rule reuse, then publishes accepted lessons  |
+| `session-retro-ko` | ko   | Korean variant of `session-retro`                                                 |
 | `to-html`          | en   | Gated HTML visualization (Compare / Tune / Learn patterns) with token-cost warning |
 | `to-html-ko`       | ko   | Korean variant of `to-html`                                                        |
 
@@ -82,6 +88,20 @@ Three modes:
 Why / How are the two-line abstraction that lets a future session resume in seconds — `Why` is the session's intent, `How` is the approach. `continues-why` and `continues-how` are optional wikilinks back to the previous sealed snapshot whose intent / approach this session continues.
 
 To put snapshots elsewhere (e.g. a personal wiki), set `SESSION_SEAL_DIR` in your environment. Auto-recall on session start is intentionally not bundled — see the skill's "Customization" section if you want it.
+
+### `session-retro` — what it does
+
+`session-retro` is a **manual** pass you run before closing a session — and, if you also seal sessions, before `/session-seal`. When you run it, the agent:
+
+1. **Scores reuse first** — for each previously published rule that should have applied, it reports *where and how* it was actually used, with a verdict of worked / partly worked / did not work. This section comes first on purpose: it brakes the urge to just add another rule. On a first run with nothing published, it says so in one line and moves on.
+2. **Analyses 4 axes × 2 lenses** — went well / went wrong / was hard / was learned, each through an engineering and a business lens. Every item must anchor to an observable event in the session, and the mistakes axis is never allowed to be empty.
+3. **Judges, binary** — each node is either a 🟢 candidate (rule / skill / guardrail) or `unclassified` **with a stated reason**. No intensity grades, because a low grade buries an item while pretending it was reviewed.
+4. **Stops at a human GATE** — candidates are presented as prose, never as clickable options, so reading is forced. Rejecting or rewording is an explicitly valid outcome, and any area you rejected before is flagged next to the candidate.
+5. **Publishes only what you accepted** — rules land in `~/.claude/rules/*.md` following the bundled `RULE-FORMAT.md`, which is tuned for files that get loaded into context every session (target 1.5–3K characters).
+
+The skill bundles `RETRO-FORMAT.md` (output shape), `RULE-FORMAT.md` (rule file shape), and `examples/worked-example.md` (a full de-identified retro, end to end).
+
+If your setup doesn't auto-load `~/.claude/rules/`, publish to `~/.claude/CLAUDE.md` or any always-loaded location instead — only the destination changes. Step 6, writing nodes into a cross-session retrospective corpus, is optional and skipped by default.
 
 ### `to-html` — what it does
 
