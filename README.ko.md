@@ -1,6 +1,6 @@
 # skills
 
-> 다국어 Claude Code skills 모음. 메모리 통합용 `dream`, 이어받기 가능한 세션 봉인용 `session-seal`, GATE 기반 세션 회고용 `session-retro`, 가치 판정 후 HTML 시각화 변환용 `to-html`.
+> 다국어 Claude Code skills 모음. 메모리 통합용 `dream`, 이어받기 가능한 세션 봉인용 `session-seal`, GATE 기반 세션 회고용 `session-retro`, 가치 판정 후 HTML 시각화 변환용 `to-html`, 자율성 다이얼로 체크리스트를 커밋까지 몰고 가는 `task-routine`.
 
 [Claude Code](https://docs.claude.com/en/docs/claude-code) 용 skills 모음을 단일 plugin 으로 publish 한 저장소. 각 skill 은 영어판과 한국어판 두 변형으로 제공되어, 실제로 에이전트에게 말하는 언어에 맞춰 깔끔하게 트리거된다.
 
@@ -29,6 +29,8 @@ cp -r skills/skills/session-retro    ~/.claude/skills/session-retro
 cp -r skills/skills/session-retro-ko ~/.claude/skills/session-retro-ko
 cp -r skills/skills/to-html          ~/.claude/skills/to-html
 cp -r skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
+cp -r skills/skills/task-routine     ~/.claude/skills/task-routine
+cp -r skills/skills/task-routine-ko  ~/.claude/skills/task-routine-ko
 ```
 
 PowerShell (Windows):
@@ -43,6 +45,8 @@ Copy-Item -Recurse skills/skills/session-retro    ~/.claude/skills/session-retro
 Copy-Item -Recurse skills/skills/session-retro-ko ~/.claude/skills/session-retro-ko
 Copy-Item -Recurse skills/skills/to-html          ~/.claude/skills/to-html
 Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
+Copy-Item -Recurse skills/skills/task-routine     ~/.claude/skills/task-routine
+Copy-Item -Recurse skills/skills/task-routine-ko  ~/.claude/skills/task-routine-ko
 ```
 
 ## 제공 Skills
@@ -57,6 +61,8 @@ Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 | `session-retro-ko` | ko   | `session-retro` 의 한국어 변형                                                      |
 | `to-html`          | en   | 가치 판정 후 HTML 시각화 변환 (Compare / Tune / Learn 패턴, 토큰 비용 경고 포함)   |
 | `to-html-ko`       | ko   | `to-html` 의 한국어 변형                                                            |
+| `task-routine`     | en   | 작업 체크리스트를 하나씩 커밋까지 몰고 가는 개발 루프 (자율성 다이얼 포함)          |
+| `task-routine-ko`  | ko   | `task-routine` 의 한국어 변형                                                       |
 
 ### `dream` 이 무엇을 하는가
 
@@ -114,6 +120,22 @@ Why / How 는 미래 세션이 즉시 이어받게 해주는 두 줄 abstraction
 5. **HTML 파일 하나 쓰기** — `<cwd>/.claude/to-html/YYYY-MM-DD-HHmm-{슬러그}.html`. CDN 의존성만, 더블클릭으로 열림. **자동으로 열지 않는다.**
 
 저장 디렉토리는 환경변수 `TO_HTML_DIR` 로 override. 세 패턴과 5배 비용 경고 framing 은 Anthropic / Tariq Sipha 의 공개 가이드에서 직접 가져옴 — 스킬의 "출처" 섹션 참조.
+
+### `task-routine` 이 무엇을 하는가
+
+`task-routine` 은 체크리스트를 받아 각 항목을 **설계 루프 → 구현 루프 → 커밋** 으로 몰고 간다. 첫 실행에서 질문 넷을 하고 config 를 쓴 뒤로는:
+
+1. **프로브** — 실제로 설치된 것(CLI·스킬·에이전트·플러그인)을 매 실행 확인한다. 저장된 능력 목록은 사용자가 뭘 깔거나 지운 순간 썩기 때문이다.
+2. **작업 해석** — 교체 가능한 소스 어댑터로: 로컬 마크다운 체크리스트 또는 GitHub 이슈. 어댑터의 `locality`(`local`/`remote`)가 완료 표시를 파일 편집으로 볼지 트래커 쓰기로 볼지를 결정한다.
+3. **검토 루프가 붙은 설계** — *독립* 검토자(다른 벤더 CLI → 다른 모델 → 새 컨텍스트)가 plan 을 받되 설계 대화는 절대 받지 않는다. 설계자의 논증을 받아 든 검토자는 검토가 아니라 동의를 돌려준다.
+4. **한 루프로 구현** — 구현 → 검증 → 리뷰가 예산 3을 공유하고, 리뷰는 검증이 통과한 뒤에만 돈다. 정리는 출구에, 루프를 2회 이상 돈 경우에만 나타난다.
+5. **커밋하고 거기서 멈춘다.** push·PR·머지·회고는 하지 않는다.
+
+핵심은 **자율성 다이얼** 이다: `manual` / `assisted`(기본) / `auto`. 무인 실행은 *레벨이 허용* **∧** *위험 등급이 auto-eligible* 일 때만 성립한다. 네 부류는 `auto` 를 포함한 모든 레벨에서 묻는다 — 밖으로 나가는 행위, 파괴적 로컬 작업, 트래커 쓰기, 그리고 security 5신호. 그리고 **검사 자체를 돌릴 수 없으면 통과가 아니라 정지다.**
+
+모든 추천·선택·결과는 결정 로그에 각각 한 줄로 append 된다(제자리 수정 없음). `task-routine report` 가 그 로그를 결정 지점별 성적표로 바꾸는데, 동의율은 **사람이 답한 결정만** 세고 계산한다 — 무인 실행된 것을 넣으면 "자동화했으니 자동화해도 됐다" 를 증명하는 분석이 된다. 다이얼을 올리는 것은 언제나 사용자의 몫이다.
+
+상태 디렉토리는 `TASK_ROUTINE_DIR` 로 override. 상태를 repo 밖에 두는 것은 의도다 — 무인 실행이 자기 로그를 커밋할 수 있으면 안 된다.
 
 ## 왜 ko / en 을 따로 분리했나?
 

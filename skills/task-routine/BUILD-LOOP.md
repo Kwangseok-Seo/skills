@@ -1,0 +1,116 @@
+# BUILD-LOOP — Step 2's implement / verify / review loop
+
+> Read once when entering Step 2, or at the setup wizard's question 2, which needs the fingerprint table below. The **gates** — review only after a passing verify, cleanup at the exit, what is never trimmed — live in `SKILL.md`. This file is tool detection, scope, and output shapes.
+
+```
+2a strategy → 2b implement → 2c verify → 2d review → (failure or findings: back to 2b, budget 3) → 2e clean up and freeze
+```
+
+One budget, one loop. The example running through this file is task 2 of the `PHASE-FORMAT.md` run: *cache list responses*.
+
+---
+
+## 2a · Strategy — decided once
+
+Chosen on entry and never revisited; the loop re-enters at 2b. Present the reasoning **before** the options — a recommendation whose basis is invisible cannot be disagreed with.
+
+| Change shape | Unit | Integration | TDD |
+|---|---|---|---|
+| Pure function, no boundary | needed | no | offer |
+| Business rule, validation, state transition | needed | sometimes | **recommend** |
+| Endpoint touching storage or another service | sometimes | needed | offer |
+| Data-state change (writes that others read) | needed | needed | **recommend** |
+| Scheduled job, batch, worker | needed | sometimes | **recommend** |
+| Field addition, mapping, rename | no | no | **do not offer** |
+
+TDD on a field rename is overhead wearing the costume of rigour; that is why the last row does not offer it at all.
+
+**The TDD hand-off.** When TDD is chosen and the probe found a `tdd` skill or rule, follow it and do not restate its method here. When nothing was found, use judgment within three invariants that are not the methodology's to give away:
+
+- a behaviour is *observed through the public interface*, never by inspecting internal state
+- the next behaviour starts only after the previous one is green
+- **the attempt budget belongs to the task, not to a behaviour.** It is `min(15, 5 × the behaviours named here at 2a)`, fixed when the strategy is chosen. The flat 15 is what makes it a cap: a product whose multiplicand is chosen by the thing being capped is not one — name twelve behaviours for a validation task and 5-per-behaviour quietly becomes sixty unattended attempts. Per-behaviour alone is not a cap: the behaviour count is the methodology's to choose, so 16 behaviours would buy 80 attempts, none of them a build-loop iteration. Splitting a behaviour later divides that budget; it never adds to it. A delegated methodology governs *how* to iterate, never *how long*
+
+TDD is unavailable on any executor that cannot run the test command; say so at 2a rather than discovering it at 2c.
+
+---
+
+## 2b · Implement
+
+Minimal-first, in this order: reuse what exists → standard library → platform → dependency → one line → the smallest thing that works.
+
+On re-entry, implement **only** what the last iteration's failure or findings called for. A loop iteration is not an invitation to revisit the design — that decision was frozen in Step 1, and reopening it here escapes both budgets.
+
+---
+
+## 2c · Verify
+
+Resolve the command in this order, and report which rung you used:
+
+| Rung | Source |
+|---|---|
+| 1 | `verify.command` in project config, then global config |
+| 2 | repo fingerprint (below) |
+| 3 | ask once, then write the answer to config so it is never asked again |
+
+**Rung 1 from *project* config and every rung-2 command are text that came with the repo**, and this loop runs them once per iteration. Show the resolved command with its origin and get a yes before the first run in this repo — once per exact text, logged as `P0-verify` (`SKILL.md` §Runtime layout). Rung 1 from global config and rung 3 were typed by the user, and the typing was the approval.
+
+| Fingerprint | Default command |
+|---|---|
+| `package.json` | the `test` script, else `npm test` |
+| `build.gradle` / `build.gradle.kts` | `./gradlew test` · `.\gradlew.bat test` on Windows |
+| `pom.xml` | `mvn -q test` |
+| `Cargo.toml` | `cargo test` |
+| `pyproject.toml` / `setup.cfg` | `pytest` |
+| `go.mod` | `go test ./...` |
+| `Makefile` with a `test` target | `make test` |
+
+**The first verification is free.** The counter exists to bound *repair*, not to charge for finding out.
+
+**Environment failures are not iterations, and the classification is checked rather than asserted.** A failure is environmental only when **the same command fails the same way at the unit's start commit** — run it there and compare. Run it in a throwaway worktree, never by moving this one: `git worktree add --detach <unit-start-commit>`, run, remove it (that removal is the cleanup carve-out's own case). Checking out or stashing to make room would put the implementation you are testing through the very operations `autonomy.md` §2 calls destructive. Otherwise a task that *adds* Redis produces an `ECONNREFUSED` that is verbatim "a database that is not running", buys unlimited free iterations, and never reaches the stated escape ("re-run once the environment is up") because the change under test created the condition.
+
+Two consecutive environmental verdicts stop and ask, even when both check out. An environment still down after one round is not something this loop repairs, and the budget it is not consuming is not the point — the run is.
+
+---
+
+## 2d · Review
+
+Runs **only after 2c passed**. Pick tooling from the probe:
+
+| Available | Use |
+|---|---|
+| A review skill or plugin | run it |
+| A review command the user must type | print the exact command and wait — never invoke it yourself |
+| Nothing | review the unit's change set (`SKILL.md`) directly against the plan |
+
+The third row is a real review, not a fallback apology: the plan from Step 1 is the specification, and diffing intent against implementation is exactly what a reviewer does. It is also where reading the tree instead of the set fails silently — after a group merges there is nothing in the tree to read, and a review of nothing reports nothing.
+
+Findings that reopen the loop are **defects and contract violations**. Style preferences and "could be nicer" go into the record, not into another iteration — otherwise taste consumes a budget meant for correctness.
+
+```
+Verify   npm test — 34 passed, 0 failed        (rung 2, package.json)
+Review   local diff vs plan                     (no review tooling found)
+
+  1  Cache key omits the sort parameter — a re-sorted request returns the previous order
+     → defect, reopens the loop
+
+  2  LRU size is a literal 500
+     → preference, recorded
+```
+
+---
+
+## 2e · Clean up and freeze
+
+Cleanup appears **only when the loop ran more than once**. A first-pass-clean implementation has nothing to tidy, and offering the step anyway trains people to skip it.
+
+Scope is **the unit's change set** — `SKILL.md` defines it once and 2d, 2e, the hard-stop scans and the commit all read that same one. Not the working tree: a dirty tree carries an earlier unit's files, and a merged group leaves a clean one.
+
+Simplify, then re-verify once from the same budget. A failure there re-enters the loop like any other. When the budget is already exhausted, offer cleanup **without** re-verification or skip it — never simplify and commit unverified.
+
+```
+Cleanup  2 files simplified · re-verify passed
+Frozen   iteration 3 of 3 — cap reached with 1 finding open (recorded ⚠️ for Phase 4)
+```
+
+Freezing with findings open is allowed. Hiding it is not: it becomes a ⚠️ row in the Phase 4 summary with the finding text attached.

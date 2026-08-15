@@ -1,6 +1,6 @@
 # skills
 
-> Multilingual Claude Code skills. `dream` for memory consolidation, `session-seal` for resumable session snapshots, `session-retro` for gated session retrospectives, `to-html` for gated HTML visualization.
+> Multilingual Claude Code skills. `dream` for memory consolidation, `session-seal` for resumable session snapshots, `session-retro` for gated session retrospectives, `to-html` for gated HTML visualization, `task-routine` for driving a checklist to commits with an autonomy dial.
 
 A small, opinionated collection of [Claude Code](https://docs.claude.com/en/docs/claude-code) skills published as a single plugin. Each skill ships in two language variants — English and Korean — so the one that matches how you actually talk to your agent triggers cleanly.
 
@@ -29,6 +29,8 @@ cp -r skills/skills/session-retro    ~/.claude/skills/session-retro
 cp -r skills/skills/session-retro-ko ~/.claude/skills/session-retro-ko
 cp -r skills/skills/to-html          ~/.claude/skills/to-html
 cp -r skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
+cp -r skills/skills/task-routine     ~/.claude/skills/task-routine
+cp -r skills/skills/task-routine-ko  ~/.claude/skills/task-routine-ko
 ```
 
 PowerShell (Windows):
@@ -43,6 +45,8 @@ Copy-Item -Recurse skills/skills/session-retro    ~/.claude/skills/session-retro
 Copy-Item -Recurse skills/skills/session-retro-ko ~/.claude/skills/session-retro-ko
 Copy-Item -Recurse skills/skills/to-html          ~/.claude/skills/to-html
 Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
+Copy-Item -Recurse skills/skills/task-routine     ~/.claude/skills/task-routine
+Copy-Item -Recurse skills/skills/task-routine-ko  ~/.claude/skills/task-routine-ko
 ```
 
 ## Available skills
@@ -57,6 +61,8 @@ Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 | `session-retro-ko` | ko   | Korean variant of `session-retro`                                                 |
 | `to-html`          | en   | Gated HTML visualization (Compare / Tune / Learn patterns) with token-cost warning |
 | `to-html-ko`       | ko   | Korean variant of `to-html`                                                        |
+| `task-routine`     | en   | Drives a task checklist to commits, one at a time, with an autonomy dial           |
+| `task-routine-ko`  | ko   | Korean variant of `task-routine`                                                   |
 
 ### `dream` — what it does
 
@@ -114,6 +120,22 @@ If your setup doesn't auto-load `~/.claude/rules/`, publish to `~/.claude/CLAUDE
 5. **Writes one HTML file** — to `<cwd>/.claude/to-html/YYYY-MM-DD-HHmm-{slug}.html`. CDN-only deps, opens by double-click. **Never auto-opens** the file.
 
 Override the save directory with the `TO_HTML_DIR` environment variable. The framing (three patterns, 5× cost warning) is taken from Anthropic / Tariq Sipha's published guidance — see the skill's "Sources" section.
+
+### `task-routine` — what it does
+
+`task-routine` takes a checklist and drives each item to a commit through **a design loop → a build loop → a commit**. On first run it asks four questions and writes a config; after that:
+
+1. **Probes** what is actually installed — CLIs, skills, agents, plugins — every run, because a stored capability list goes stale the moment you install or remove something.
+2. **Resolves** tasks through a pluggable source adapter: a local markdown checklist, or a GitHub issue. The adapter's `locality` (`local` / `remote`) is what decides whether marking a task done is a file edit or a tracker write.
+3. **Designs with a review loop** — an *independent* reviewer (a different vendor's CLI, else a different model, else a fresh context) that receives the plan and never the design conversation. A reviewer handed the designer's argument returns agreement, not review.
+4. **Builds in one loop** — implement → verify → review, sharing one budget of 3, with review running only after a passing verify. Cleanup appears at the exit, and only when the loop ran more than once.
+5. **Commits, and stops there.** No push, no PR, no merge, no retrospective.
+
+The distinguishing feature is the **autonomy dial**: `manual` / `assisted` (default) / `auto`, where a decision runs unattended only when *the level allows it* **and** *its risk tier is auto-eligible*. Four classes are asked about at every level including `auto` — anything outward-facing, destructive local work, tracker writes, and any of five security signals — and **a check that cannot run counts as a stop, never as a pass.**
+
+Every recommendation, choice, and outcome is appended to a decision log as its own line (never edited in place). `task-routine report` turns that log into a scorecard per decision point, and the agreement rate is computed only over decisions a *human* answered — including unattended ones would make the analysis prove that automating was fine because it was automated. Raising the dial is always the user's move.
+
+Override the state directory with `TASK_ROUTINE_DIR`. State lives outside the repo on purpose, so an unattended run cannot commit its own log.
 
 ## Why ko / en variants?
 
