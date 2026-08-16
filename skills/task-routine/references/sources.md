@@ -81,6 +81,8 @@ Silently matching by similarity would mark the wrong task done; silently droppin
 
 Read with `gh issue view <n> --json body,title`. Write with `gh issue edit <n> --body-file -`. Rewrite only the checkbox characters; a body round-tripped through a formatter loses whatever the humans put there.
 
+Measured against a real issue, in exactly those two forms: a body carrying CRLF endings, a trailing-space hard break, a tab-indented line, non-ASCII text, an emoji, an HTML comment, a whitespace-only line and no final newline came back **byte-identical** — 204 bytes out and back, its three CRs intact — with the checkbox character as the only difference. The transport normalises none of it, which is what makes the rule above enforceable: anything a round-trip loses here was lost by the code in between, not by GitHub.
+
 ## Adding an adapter
 
 Only these need answering:
