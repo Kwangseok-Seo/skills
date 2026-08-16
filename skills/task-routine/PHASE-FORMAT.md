@@ -119,7 +119,7 @@ Executor  native subagents + git worktree
 | Column | Holds |
 |---|---|
 | `#` / task | index and title |
-| status | ✅ done · ⚠️ progressed past a cap · ⏭️ skipped · ❓ finished, but its test strategy and what it wrote disagree — no test where one was claimed, or behaviour where `none` was. **⚠️ advances the consecutive-failure counter, and ⏭️ advances it only for a task that entered Step 2**, ✅ clears it, ❓ does neither (`SKILL.md`) |
+| status | ✅ done · ⚠️ progressed past a cap · ⏭️ skipped · ❓ finished, but it committed something the run cannot stand behind — its test strategy and what it wrote disagree (no test where one was claimed, or behaviour where `none` was), or it passed a dirty-path stop and its commit is not the tree 2c verified. **⚠️ advances the consecutive-failure counter, and ⏭️ advances it only for a task this run had already spent a budget on**, ✅ clears it, ❓ does neither (`SKILL.md`) |
 | tests | the strategy actually used, not the one chosen |
 | re-verify | failed re-verification count · `(cap)` when the cap was hit · `(group)` when the count is a merged group's shared one |
 | commit | short hash, or `—` when nothing was committed |
@@ -144,7 +144,7 @@ TODO.md — 4 completion marks, uncommitted
 
 Tasks 1 and 3 were one merged group, so they show **one** shared re-verify count, not one each. The failure-counter line appears only when that counter moved: printing `0 of 2` every run is noise, and printing nothing after it moved hides how close the run came to stopping.
 
-A `❓` row's `tests` cell reads `none` because that column holds what was **used**; the strategy that was *chosen* belongs in the line underneath, which is the only place the contradiction is legible. A unit that legitimately chose `none` prints `none` here too and keeps its ✅ — the two rows differ in what was claimed, never in what the cell shows, which is why the line reports the claim.
+A `❓` row from an unmet test claim has its `tests` cell reading `none` because that column holds what was **used**; the strategy that was *chosen* belongs in the line underneath, which is the only place the contradiction is legible. A unit that legitimately chose `none` prints `none` here too and keeps its ✅ — the two rows differ in what was claimed, never in what the cell shows, which is why the line reports the claim.
 
 When the brake does trip, the run stops where it stands and names what tripped it — this is the six-task run traced in `references/autonomy.md`, not the one above:
 
