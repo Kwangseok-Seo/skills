@@ -35,7 +35,7 @@ The gates below are the contract: entry conditions, caps, and hard stops. Everyt
 | [BUILD-LOOP.md](./BUILD-LOOP.md) | entering Step 2, **or the wizard's question 2** — verify/review tooling, the fingerprint table, cleanup scope, TDD hand-off |
 | [references/setup.md](./references/setup.md) | first run, or `setup` argument — wizard, config schema, capability probe |
 | [references/sources.md](./references/sources.md) | resolving tasks — adapter contract, local-markdown and GitHub implementations |
-| [references/autonomy.md](./references/autonomy.md) | any run at `assisted` or `auto` — level × tier table, hard-stop detection, brakes |
+| [references/autonomy.md](./references/autonomy.md) | every run, before Phase 1 — level × tier table, hard-stop detection, brake semantics |
 | [references/execution.md](./references/execution.md) | more than one parallel-eligible group — executor contract and fallback ladder |
 | [references/telemetry.md](./references/telemetry.md) | writing the decision log or the checkpoint, or analysing either — both schemas |
 
@@ -94,12 +94,14 @@ run unattended  ⟺  level allows this step  ∧  tier == auto-eligible  ∧  no
 
 ## Hard stops — asked at every level, `auto` included
 
-1. **Anything outward-facing** — `push`, opening or merging a PR, pushing tags, publishing a release.
-2. **Destructive local work** — two tests, either one is enough: the bytes the operation destroys cannot be got back from git, **or** what is being added, removed, or rewritten was never named by the plan. Recoverable is not the same as reviewed. `references/autonomy.md` §2.
-3. **Writing to an external tracker** — posting comments, changing status or checkboxes, changing labels or assignees.
-4. **Touching a security surface** — see the five signals in `references/autonomy.md`.
+1. `H1` **Outward-facing** — `push`, opening or merging a PR, pushing tags, publishing a release.
+2. `H2` **Destructive local work** — two tests, either one enough: unrecoverable bytes, **or** never named by the plan.
+3. `H3` **Writing to an external tracker** — comments, status, checkboxes, labels, assignees.
+4. `H4` **Touching a security surface** — any one of five signals.
 
-**Any hard-stop test whose input is unavailable is a stop.** Written as a list of broken inputs — unreadable diff, empty file list, unreachable source — the clause always misses one: the fourth item nobody wrote is "there is no frozen plan to compare against, because the design loop was skipped". So it is a rule instead: no input, no pass. A guard that goes quiet when it breaks is worse than no guard.
+These fire at every level, so **`references/autonomy.md` is read on every run, before Phase 1**, and each class's tests live there. The level decides which *decisions* are asked, never which *actions* are guarded.
+
+**A test whose input is unavailable is a stop — written as a rule, never as a list of broken inputs.** No input, no pass. A guard that goes quiet when it breaks is worse than no guard.
 
 ## Brakes on an unattended run
 
@@ -122,15 +124,9 @@ run unattended  ⟺  level allows this step  ∧  tier == auto-eligible  ∧  no
 | build-loop iterations | one **unit** — a sequential task, or a merged parallel group, which shares one budget, one verify, one review | when the next unit starts |
 | consecutive failures | the whole **run**, counted in **tasks** | only when a task ends ✅ |
 
-A task that ends anything other than ✅ — a cap reached and continued (⚠️), or abandoned after work began (⏭️) — advances the consecutive-failure counter; a task that ends ✅ sets it back to 0. **A merged group contributes one increment per task it contains**, not one for the group: the budget is shared but the give-up signal is about tasks and wall time, and counting by unit would let a single five-task group burn the whole run and trip nothing.
+Only ✅ clears the consecutive-failure counter; ⚠️ and ⏭️ advance it, a merged group by one per task it contains, and a task counts as attempted once it entered Step 2. The design, build, and TDD budgets are independent of each other, and environment failures consume no iteration.
 
-A task counts as **attempted** once it entered Step 2. A task declined earlier — at a hard stop, or at a design prompt, before any code was written — is reported ⏭️ and does **not** advance the counter: declining two security prompts in a row is the guard working, not the run's premise failing. Tasks the run never reached at all neither advance nor clear it.
-
-The counter is evaluated **when a task ends**, never when one starts. Otherwise a run resumed at the cap re-trips before doing anything, and `--resume` after fixing the cause is a no-op that reports the same stop forever.
-
-**Reset it at a task boundary and 2 becomes unreachable**, because every failure is followed by one — and the run the brake exists to stop, against a stale list or a stale verify command, spends the whole `max_tasks` budget instead.
-
-The design, build, and TDD budgets are independent of each other — a design that took three rounds must not arrive at Step 2 with no build budget left. Environment failures (database down, missing service) consume no iteration.
+**Which end-state advances what, why the scopes are drawn where they are, and the worked six-task trace: `references/autonomy.md`.** Getting a reset boundary wrong is how a cap becomes unreachable, so read it there rather than reconstructing it here.
 
 ## What "this unit changed" means — one set, read by everything
 
@@ -175,11 +171,11 @@ Two loops and a commit. Banner each task as `TASK [n/N]: <title>`.
 
 Reviewer selection, brief contents, verdict vocabulary, and skip table: **[DESIGN-LOOP.md](./DESIGN-LOOP.md)**.
 
-- **The reviewer is not the designer, and receives the plan — never the reasoning.** Hand over the design conversation and what comes back is agreement, not review; that agreement is worse than no review, because it reads as corroboration.
+- **The reviewer is not the designer, and receives the plan — never the reasoning.** Hand over the design conversation and what comes back is agreement, not review.
 - **Accepting or rejecting a finding stays in this thread.** The reviewer advises, it does not decide — otherwise the Phase 4 audit table attributes to you a choice you did not make.
 - **Skip the loop** when the change is one file with no new interface, schema, or dependency — **and when the surface was already reviewed earlier in this run**: extend the frozen plan instead of re-reviewing it. Without that second clause, a checklist that slices one feature reviews the same design once per slice, each time from a reviewer who cannot see the other slices. Never skip on the strength of that alone: the full table is in `DESIGN-LOOP.md`, and the task's own text read against the security signals can force the loop before any code exists.
 - **A skipped loop still freezes a plan** — the one-line file list the pre-ordering scan produced. Skipping means "no review was needed", never "no plan exists": the destructiveness scope test asks what the plan named, and a missing plan would answer *nothing to compare against*, which reads as a pass.
-- **A verdict that does not count as a round still costs an invocation.** `NEEDS_MORE_INFO` is exempt from the round counter so questions cannot drain the design budget; it is not exempt from the ceiling of `rounds + 1` dispatches per task, and two unusable verdicts in a row is a stop-and-ask. An exemption counted nowhere is an unlimited budget.
+- **A verdict that does not count as a round still costs an invocation.** `NEEDS_MORE_INFO` is exempt from the round counter, never from the ceiling of `rounds + 1` dispatches per task; two unusable verdicts in a row is a stop-and-ask.
 - Decision `S1-design`, tier `auto-eligible`.
 
 **Step 2 · Build — a loop.** Implementation, verification, and review share one budget and one loop, which is what makes the cleanup condition loop state rather than a pair of flags.

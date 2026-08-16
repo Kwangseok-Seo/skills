@@ -1,6 +1,6 @@
 # autonomy — level × tier, hard stops, brakes
 
-> Read on any run at `assisted` or `auto`. A fully manual run does not need it: everything is asked anyway.
+> Read on **every** run, before the first hard-stop test. A fully manual run needs it too: the level decides which *decisions* are asked, never which *actions* are guarded, and the four hard-stop classes fire at `manual` exactly as they do at `auto`.
 
 ```
 run unattended  ⟺  level allows this step  ∧  tier == auto-eligible  ∧  no hard-stop signal
@@ -90,7 +90,9 @@ Both lists are floors, not definitions — ⓐ's paths as much as ⓑ's words. A
 
 ### The check fails closed
 
-**If the check cannot run, that is not a pass.** An unreadable diff, an unreachable source, or **an empty change set for a unit whose plan named files** — stop and ask, naming what could not be determined. The signals are evaluated against the unit's change set (`SKILL.md`), never against a bare `git diff`, because a clean tree after a merge and a genuinely empty change look identical from here.
+**If the check cannot run, that is not a pass — and that is a rule, never a list of broken inputs.** Written as a list — unreadable diff, empty file list, unreachable source — the clause always misses one: the item nobody wrote is "there is no frozen plan to compare against, because the design loop was skipped". So: no input, no pass. Stop and ask, naming what could not be determined. This governs all four classes, not only the signals here.
+
+Those signals are evaluated against the unit's change set (`SKILL.md`), never against a bare `git diff`, because a clean tree after a merge and a genuinely empty change look identical from here — **an empty change set for a unit whose plan named files** is itself one of these stops.
 
 This is the clause most likely to be quietly dropped during a refactor, because a broken check and a clean check look identical from the outside: both produce no warning. They are not the same, and only one of them may proceed.
 
@@ -100,7 +102,7 @@ This is the clause most likely to be quietly dropped during a refactor, because 
 
 **Three scopes, not one.** The design-round, reviewer-invocation and TDD counters are per task and reset when the next task starts. The build-loop budget belongs to a **unit** — a sequential task, or a merged parallel group, which shares one budget, one verify and one review. The consecutive-failure counter belongs to the **run**.
 
-The design, build and TDD budgets are independent of one another — a task that spent three design rounds still arrives at Step 2 with a full build budget. The invocation ceiling is the deliberate exception: it is derived from the round cap, so raising `design_loop.rounds` raises it too.
+The design, build and TDD budgets are independent of one another — a task that spent three design rounds still arrives at Step 2 with a full build budget. The invocation ceiling is the deliberate exception: it is derived from the round cap, so raising `design_loop.rounds` raises it too. Environment failures consume no build iteration at all; `BUILD-LOOP.md` says how that verdict is checked rather than asserted.
 
 **Consecutive failures stops the whole loop, not the task.** The other brakes bound one unit's effort; this one says the run's premise is wrong. Two tasks in a row hitting a cap is not bad luck, it is usually a stale task list, a broken environment, or a verify command that no longer matches the repo. So it counts what each **task** ended as — a merged group contributing one increment per task in it — and only a ✅ clears it:
 
@@ -116,7 +118,9 @@ task                       ended       counter
 
 (Six tasks, so not the four-task run in `PHASE-FORMAT.md`.) Two things this shape buys that a per-unit count does not: a five-task group that ends ⚠️ adds **five**, so the grouping decision cannot quietly widen the run's tolerance — and reset only on ✅, never on the next task, because every failure is followed by a task boundary and resetting there puts 2 out of reach.
 
-A task the user declined at a hard stop before Step 2 began is ⏭️ but does **not** count. Declining two security prompts in a row is the guard doing its job; treating that as evidence the run's premise is wrong would punish the correct answer.
+A task the user declined before Step 2 began is ⏭️ but does **not** count — at a hard stop or at a design prompt, either way, as long as no code had been written. Declining two security prompts in a row is the guard doing its job; treating that as evidence the run's premise is wrong would punish the correct answer.
+
+**The counter is read when a task ends, never when one starts.** Evaluated on entry, a run resumed at the cap re-trips before doing anything, and the `--resume` someone issued *after fixing the cause* becomes a no-op that reports the same stop forever. The brake exists to end a run that cannot progress, not to make progress impossible.
 
 ## What "asked" looks like under `auto`
 
