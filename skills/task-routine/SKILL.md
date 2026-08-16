@@ -114,7 +114,7 @@ These fire at every level, so **`references/autonomy.md` is read on every run, b
 | Design review rounds per task | 3 | Ask: one more / freeze as-is / SKIP this task / stop |
 | Design reviewer invocations per task | rounds + 1 (4) | Ask: one more / freeze as-is / SKIP this task / stop |
 | Build-loop iterations per unit | 3 | Ask: one more / freeze as-is / SKIP this task / stop |
-| TDD attempts per task | `min(15, 5 × behaviours named at 2a)` | Ask: retry / SKIP / re-plan / drop TDD / stop |
+| TDD attempts per task | `min(15, 5 × behaviours named at 2a)` — the 15 is `build_loop.tdd_attempts` | Ask: one more attempt / drop TDD / SKIP / re-plan / stop |
 
 **Each counter resets at the boundary of the thing it bounds, and those boundaries are not the same:**
 

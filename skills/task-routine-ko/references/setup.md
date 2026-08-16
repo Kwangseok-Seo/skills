@@ -41,7 +41,7 @@ auto       auto-eligible 전부 알아서 진행 — 기본값이 아니고, 절
   "autonomy": { "level": "assisted" },
   "auto": { "max_tasks": 5, "consecutive_failures": 2 },
   "design_loop": { "rounds": 3, "reviewer": "auto" },
-  "build_loop": { "iterations": 3 },
+  "build_loop": { "iterations": 3, "tdd_attempts": 15 },
   "execution": { "timeout_minutes": 20,
                  "executor": { "command": "herdr", "session_env": "HERDR_ENV" } },
   "capabilities": { "probed_at": "2026-08-16T09:14:00+09:00",
