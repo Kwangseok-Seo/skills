@@ -50,9 +50,14 @@ A **decision** is written when the choice is made. An **outcome** is written in 
   "review_flagged": true,
   "reverted": false,
   "manual_intervention": false,
-  "capped": true
+  "capped": true,
+  "claim_met": "unmet"         // S2-test outcome lines ONLY: "met" · "unmet" · "unclaimed"
+                               // (strategy was none). Absent where the repo keeps no tests
+                               // as separate paths at all and the check does not run
 }
 ```
+
+**`claim_met` belongs to `S2-test` and to no other line**, because it is that decision's own outcome: the strategy said what would verify the unit, and the paths the unit wrote either hold a test path or do not (`SKILL.md` §Step 3). `unclaimed` is a `none` strategy that also passed the reverse check; a `none` unit that shipped behaviour anyway is `unmet` like any other. Writing it onto the unit's other decisions would file one observation against four separate judgments. Three values rather than a boolean, because *nothing was claimed* and *the claim went unmet* are different facts and only the second is a finding. The absent case is different again and belongs to the **repo**, not the unit — it is reported once in Phase 1, never once per row.
 
 `recommended_index` and `chosen_index` are indices into **the `options` array as actually written on this line** — count them from the array, never from a numbered list in a document. Options get reordered; a stale index silently records disagreement where there was none.
 
@@ -85,22 +90,24 @@ Different file, different rules: the log is append-only history, the checkpoint 
   ],
   "tasks": {
     "cache-list-responses": { "status": "capped", "commit": "e4f5g6h", "design_rounds": 1,
-                              "reviewer_invocations": 2, "tests": "unit+int",
+                              "reviewer_invocations": 2,
+                              "tests_claimed": "unit+int", "tests": "unit+int",
                               "tdd_behaviours": 0, "tdd_attempts": 0,
                               "consecutive_environmental": 0, "consecutive_unusable_verdicts": 0 }
   },
-  "pending_completions": []         // remote sources only — empty here because TODO.md is local,
-}                                   // where marking done writes through at Step 3
+  "pending_completions": []         // remote completions held for the Phase 4 flush — AND any local
+}                                   // write that was attempted and failed, so a read-only or renamed
+                                    // source cannot leave a committed task looking un-done forever
 }
 ```
 
 - **`run_id` is the id**, and the filename carries it. Fixed-width, so "newest checkpoint" is the largest filename in string order — no timestamp parsing, no filesystem mtime, which is wrong the moment a file is copied. **UTC**, because local time repeats an hour at every DST fallback and string order stops meaning newest. The random suffix is what keeps two runs started in the same minute from sharing a filename and colliding their `d-<run_id>-<n>` decision ids, which the append-only design explicitly allows.
-- **Written when a unit starts and again when it ends** — not only at the end. A unit interrupted mid-flight must already have its `start_commit` and `dirty_at_start` on disk, or resume has no baseline to restore and re-derives one from a tree that is dirty with the unit's own work.
-- **`status`** uses the Phase 4 vocabulary plus `pending`: `done` ✅ · `capped` ⚠️ · `skipped` ⏭️ · `pending` (**unfinished** — never started, *or* interrupted mid-flight). A unit's status is what the consecutive-failure counter reads, and only the first three are finished. An ad-hoc `stop` therefore leaves the current unit `pending` with its counters as they stand: resume re-enters it and continues on the budget it had left, rather than restarting it with a fresh one or abandoning it as though a cap had been reached.
+- **Written when a unit starts, again as soon as it commits, and again when it ends** — not only at the end. The middle write is what makes a mid-Step-3 interrupt resumable at the completion mark instead of back inside the build loop (`SKILL.md` §Arguments); without it there is no checkpoint state that is `pending` and carries a commit. A unit interrupted mid-flight must already have its `start_commit` and `dirty_at_start` on disk, or resume has no baseline to restore and re-derives one from a tree that is dirty with the unit's own work.
+- **`status`** uses the Phase 4 vocabulary plus `pending`: `done` ✅ · `capped` ⚠️ · `skipped` ⏭️ · `unverified` ❓ (finished, no test where the strategy claimed one) · `pending` (**unfinished** — never started, *or* interrupted mid-flight). All but `pending` are finished; the counter clears on `done`, advances on `capped` and on `skipped` **with `attempted: true`**, and `unverified` moves it neither way (`SKILL.md`). That flag is why `skipped` needs one: a task declined at a hard stop *before* Step 2 stores the same status as one abandoned after entering it, and `autonomy.md` counts only the second — without the field, two correctly-declined security prompts stop a run in which nothing failed, and no later read of the checkpoint can tell that it should not have. Storing that verdict here rather than recomputing it is what lets a resumed run reprint the ❓ row — with `tests_claimed` beside `tests`, since a row that reports only what was *used* would say a unit claiming `none` failed to meet a claim it never made. The change set is gone by resume time, so the offending paths are not reprinted; what survives is the claim and the fact that nothing confirmed it, which is what sends the reader to the commit. An ad-hoc `stop` therefore leaves the current unit `pending` with its counters as they stand: resume re-enters it and continues on the budget it had left, rather than restarting it with a fresh one or abandoning it as though a cap had been reached.
 - **`dirty_at_start` is persisted, not re-derived.** It is the other half of the unit's baseline, and at resume time the tree is dirty with *this unit's own work* — re-snapshotting it there would file the unit's own edits as somebody else's and either drop them from the commit or stop on every resume. `null` means the unit has not started; `[]` means it started against a clean tree.
 - **A group unit records its workers.** Resume re-spawns only workers whose `state` is not `returned` or `merged`; a branch that already exists is reused, never rebuilt. Without this a brake that trips mid-group either discards a finished worker's branch or merges it twice.
 - **Every counter named in `SKILL.md`'s scope table appears here, at the scope that table assigns it** — as a rule, not as a list to keep in sync: `build_iterations` and `start_commit` on the unit, `design_rounds` / `reviewer_invocations` / `tdd_behaviours` / `tdd_attempts` on the task, `consecutive_failures` at the top. The two-in-a-row stops count too (`consecutive_environmental` from `BUILD-LOOP.md` §2c, `consecutive_unusable_verdicts` from `DESIGN-LOOP.md` §1d) — a counter that resets across an interrupt is a stop that never fires. Storing one at the wrong level is how resume silently hands a task a fresh budget.
-- `--resume` loads the newest checkpoint for this project and continues at the **first unit whose status is `pending`**; `capped` and `skipped` units are finished, not retried. A checkpoint with no `pending` unit is a completed run — resume says so and stops. The level stored here is **not** permission: an unattended resume needs `--auto` again, because unattended is always an explicit choice.
+- `--resume` loads the newest checkpoint for this project and continues at the **first unit whose status is `pending`**; `capped`, `skipped` and `unverified` units are finished, not retried. A checkpoint with no `pending` unit is a completed run — resume says so and stops, **unless `pending_completions` is non-empty**, in which case it reopens at the Phase 4 flush and does nothing else. The level stored here is **not** permission: an unattended resume needs `--auto` again, because unattended is always an explicit choice.
 - **A finished run's checkpoint is kept, not deleted.** It is what the next run reads as its prior analysis (`PHASE-FORMAT.md` §Phase 1) — the order and grouping live here and nowhere else, so deleting it on success would delete exactly the record the freshness table recommends reusing. Prune older checkpoints for the same `source_ref` if you like; keep the newest.
 - Nothing is considered finished while `pending_completions` is non-empty.
 
@@ -138,8 +145,11 @@ Two rates, computed over **different populations**. Getting the populations wron
 agreed rate   over decisions with  mode == "asked"           ≥ 0.9
 clean rate    over decisions with  an outcome line           ≥ 0.9
               clean = manual_intervention=false ∧ reverted=false ∧ capped=false
+                      ∧ claim_met != "unmet"
 n (asked)     ≥ 20
 ```
+
+The last conjunct bites only on `S2-test`, the one step that carries the field. Without it a run of ❓ units — every one of them flagged for manual review in Phase 4 — scores as clean evidence for automating the very decision whose claim went unmet. A repo the check does not run in carries no `claim_met`, and an absent field passes the conjunct — so those decisions **do** score clean on this dimension. That is the honest limit, not a hole to paper over: `report` prints the `not checked` count beside the rates, and a step whose evidence is mostly `not checked` is not the clean run the number suggests.
 
 **`agreed` counts only decisions a human answered.** For anything that ran unattended, `chosen == recommended` by construction — including those inflates the rate toward 1.0 and turns the analysis into "we automated it, so automating it was fine". The whole question is whether the recommendation matches what a human *would have* picked, and only asked decisions carry that evidence.
 
@@ -158,6 +168,7 @@ Reads the log, prints the table, changes nothing. This is the main use.
 ```
 Dial evidence — 31 runs · 214 decisions · 198 with outcomes
 83 of the 214 were asked; the rest ran unattended and carry no agreement evidence.
+S2-test claims — 18 met · 3 unmet · 2 unclaimed · 1 not checked
 
 step         asked   agreed   clean   affects
 S2-test         22     0.95    0.91   manual → assisted    ✓ supported

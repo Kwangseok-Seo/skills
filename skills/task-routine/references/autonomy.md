@@ -54,9 +54,9 @@ Two tests, and either one makes it a hard stop:
 | **Recoverability** | can git give back the bytes **this operation destroys**? | discarding uncommitted work (`git checkout -- <path>` · `git restore` · `git reset --hard`) · dropping a stash · deleting a branch whose commits nothing else reaches · truncating or wholesale-rewriting an untracked or ignored file |
 | **Scope** | did the frozen plan name this file? | adding, removing, or rewriting a file the plan never mentioned — **recoverable is not the same as reviewed** |
 
-**Recoverability is about the bytes destroyed, not the file's tracking status.** A one-line edit destroys one line; a whole-file rewrite of an unrecoverable file destroys the file. That distinction is what lets Step 3 flip a checkbox in *any* `TODO.md` — tracked or not, a one-character edit destroys almost nothing — while regenerating an ignored `data/seed.json` from scratch is a hard stop. Keyed to tracking status instead, the rule would prompt once per task on the very ordinary setup of a personal, gitignored TODO list, and `sources.md`'s "local completions write through immediately" would be a dead letter.
+**Recoverability is about the bytes destroyed, not the file's tracking status.** A one-line edit destroys one line; a whole-file rewrite of an unrecoverable file destroys the file. That distinction is what lets Step 3 flip a checkbox in *any* `TODO.md` — tracked or not, a one-character edit destroys almost nothing — while regenerating an ignored `data/seed.json` from scratch is a hard stop. **The Scope test does not catch that checkbox either, for its own reason:** it asks whether the frozen *plan* named the file, and the mark is not the plan's work — it is the step's bookkeeping, written after the commit the plan describes. Requiring a plan to name `TODO.md` before Step 3 may close a task would make every plan name it, which is a rule that has stopped meaning anything. Keyed to tracking status instead, the rule would prompt once per task on the very ordinary setup of a personal, gitignored TODO list, and `sources.md`'s "local completions write through immediately" would be a dead letter.
 
-Both tests read **the paths this unit wrote**, taken from the write operations — not the change set, which by construction cannot contain an ignored file and subtracts an untracked one (`SKILL.md`). The earlier enumeration — "a file whose contents were not produced by this run" — made every edit to an existing file a hard stop, which no run can satisfy, and its natural narrowing let that same `data/seed.json` be overwritten unrecoverably.
+Both tests read **the paths this unit wrote**, taken from the write operations — not the change set, which by construction cannot contain an ignored file and subtracts an untracked one (`SKILL.md`). **A shell command run for its side effects is one of those write operations** — an installer, a generator, a formatter, a `rm` — and like every other one its tests are applied to **what the operation is about to do, read from the command itself, before it runs.** That is not a preference for static reading: a stop that fires after `rm -rf src/legacy` has already run is a report, and the bytes it was guarding are gone. Comparing the tree before and after tells you what a command *did*; it can never be the input to a test that must precede it. **A command whose text names no path at all** — `make fmt`, `npm run codegen`, `./scripts/bootstrap.sh` — gives these tests nothing to read, and no input is a stop, exactly as below. The earlier enumeration — "a file whose contents were not produced by this run" — made every edit to an existing file a hard stop, which no run can satisfy, and its natural narrowing let that same `data/seed.json` be overwritten unrecoverably.
 
 **One carve-out, stated as a rule rather than an exception list:** removing a worktree *this run created* whose branch is *already merged* is not destructive — nothing is lost that is not also in the branch. Any other worktree — pre-existing, unmerged, or dirty — is a hard stop.
 
@@ -78,7 +78,7 @@ Any **one** of five signals is enough:
 
 Signals are OR'd, and they are deliberately over-inclusive: a false positive costs one prompt, a false negative ships an unreviewed auth change.
 
-**When they are evaluated.** Twice against code — at 2c on the unit's change set, and again at Step 3 on what is about to be staged, since the last repair iteration is otherwise unscanned. And once *before any code exists*: `S1-design` reads the **task's own text** against **all five signals** — the ⓑ words, the ⓐ path patterns, and the ⓒ–ⓔ subjects (a dependency, an outbound call, a container or permission change). Any hit runs the design loop.
+**When they are evaluated.** Twice against code — at 2c on the unit's change set, and again at Step 3 on the set about to be committed, since the last repair iteration is otherwise unscanned. And once *before any code exists*: `S1-design` reads the **task's own text** against **all five signals** — the ⓑ words, the ⓐ path patterns, and the ⓒ–ⓔ subjects (a dependency, an outbound call, a container or permission change). Any hit runs the design loop.
 
 All five, not ⓑ alone. "Require admin role on /admin/\*" declares its surface in ⓑ words, but "post build results to the team Slack webhook" declares an ⓓ surface with no ⓑ word in it, "run the migration container as root" declares ⓔ, and "add the deploy key to `deploy/authorized_keys`" declares ⓐ. Reading only ⓑ before code exists means those three designs are never reviewed and the prompt arrives after the code is written — the exact state this pre-code read was added to prevent.
 
@@ -109,14 +109,16 @@ The design, build and TDD budgets are independent of one another — a task that
 ```
 task                       ended       counter
 1, 3  (one merged group)   ✅ ✅         0    a group shares one budget, not one increment
-2                          ⚠️  cap       1    ⚠️ is not ✅: a cap was reached
+2                          ⚠️  cap       1    the budget ran out — the loop did not converge
 4                          ✅            0    a clean task clears it
 5                          ⚠️  cap       1
-6                          ⏭️  skipped   2 ⛔ abandoned after Step 2 began — also not ✅
+6                          ⏭️  skipped   2 ⛔ abandoned after Step 2 began
 7, 8                       —             —    never reached: neither counted nor cleared
 ```
 
 (Six tasks, so not the four-task run in `PHASE-FORMAT.md`.) Two things this shape buys that a per-unit count does not: a five-task group that ends ⚠️ adds **five**, so the grouping decision cannot quietly widen the run's tolerance — and reset only on ✅, never on the next task, because every failure is followed by a task boundary and resetting there puts 2 out of reach.
+
+**What this counter measures is whether the loop is converging.** ⚠️ says the budget ran out and ⏭️ that the unit was abandoned; ✅ says it converged cleanly. **`❓` says it converged and something else went wrong** — the unit committed, the verify passed, and only the *claim* about its tests went unmet — so it does not advance. It does not clear either: the reset is deliberately reserved for ✅, and a unit whose tests nobody can point to is not the clean success that says the run's premise is sound. ⏭️-before-Step-2 is the other end-state outside the count, for the opposite reason: nothing was attempted at all.
 
 A task the user declined before Step 2 began is ⏭️ but does **not** count — at a hard stop or at a design prompt, either way, as long as no code had been written. Declining two security prompts in a row is the guard doing its job; treating that as evidence the run's premise is wrong would punish the correct answer.
 

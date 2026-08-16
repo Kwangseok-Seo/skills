@@ -49,9 +49,14 @@
   "review_flagged": true,
   "reverted": false,
   "manual_intervention": false,
-  "capped": true
+  "capped": true,
+  "claim_met": "unmet"         // S2-test outcome 줄에만: "met" · "unmet" · "unclaimed"
+                               // (전략이 none). 테스트를 별도 경로로 두지 않는 repo 라
+                               // 검사를 안 돌린 경우엔 아예 없다
 }
 ```
+
+**`claim_met` 은 `S2-test` 의 것이고 다른 줄의 것이 아니다.** 그 결정 자신의 결과이기 때문이다: 전략이 이 단위를 무엇이 검증할지 말했고, 이 단위가 쓴 경로에 테스트가 있거나 없거나 둘 중 하나다(`SKILL.md` §Step 3). `unclaimed` 는 `none` 전략이면서 반대 방향 검사도 통과한 경우다 — 아무것도 주장하지 않고 동작을 실은 단위는 다른 것과 똑같이 `unmet` 이다. 이걸 단위의 다른 결정들에 복사해 쓰면 관측 1건을 서로 다른 판단 4개에 대고 기록하는 셈이 된다. 불리언이 아니라 값 셋인 이유는 *아무것도 주장하지 않았다* 와 *주장이 미달이다* 가 다른 사실이고 둘째만 발견이기 때문이다. 아예 없는 경우는 또 다르고 단위가 아니라 **repo** 에 속한다 — Phase 1 에서 한 번 보고하지 행마다가 아니다.
 
 `recommended_index` 와 `chosen_index` 는 **이 줄에 실제로 쓴 `options` 배열** 기준 인덱스다 — 문서의 번호 매긴 목록에서 옮기지 말고 배열에서 센다. 옵션은 재배열되기 마련이고, 낡은 인덱스는 없던 불일치를 조용히 기록한다.
 
@@ -84,22 +89,23 @@
   ],
   "tasks": {
     "cache-list-responses": { "status": "capped", "commit": "e4f5g6h", "design_rounds": 1,
-                              "reviewer_invocations": 2, "tests": "unit+int",
+                              "reviewer_invocations": 2,
+                              "tests_claimed": "unit+int", "tests": "unit+int",
                               "tdd_behaviours": 0, "tdd_attempts": 0,
                               "consecutive_environmental": 0, "consecutive_unusable_verdicts": 0 }
   },
-  "pending_completions": []         // 원격 소스 전용 — 여기서 비어 있는 이유는 TODO.md 가 로컬이고,
+  "pending_completions": []         // Phase 4 반영을 기다리는 원격 완료 — 그리고 시도했다가 실패한
 }                                   // 로컬은 Step 3 에서 바로 써 내려가기 때문
 }
 ```
 
 - **id 는 `run_id` 이고** 파일명이 그것을 담는다. 자릿수가 고정이라 "가장 최근 체크포인트" = 문자열 순으로 가장 큰 파일명이다 — 시각 파싱도, 복사하는 순간 틀어지는 파일시스템 mtime 도 필요 없다. **UTC** 인 이유: 로컬 시각은 DST 종료마다 한 시간을 되풀이해 문자열 순서가 최신을 뜻하지 않게 된다. 무작위 접미사는 같은 분에 시작한 두 실행이 파일명을 공유하고 `d-<run_id>-<n>` 결정 id 를 충돌시키는 것을 막는다 — append-only 설계가 명시적으로 허용하는 동시 실행이 바로 그 경우다.
-- **단위가 시작할 때, 그리고 끝날 때 쓴다** — 끝날 때만이 아니다. 도중에 중단된 단위도 `start_commit` 과 `dirty_at_start` 가 이미 디스크에 있어야 한다. 없으면 재개가 복원할 기준선이 없어, 그 단위 자신의 작업으로 dirty 해진 트리에서 기준선을 다시 만들어 낸다.
-- **`status`** 는 Phase 4 어휘에 `pending` 을 더한 것이다: `done` ✅ · `capped` ⚠️ · `skipped` ⏭️ · `pending`(**미완료** — 시작 안 했거나, *또는* 도중에 중단됨). 연속 실패 카운터가 읽는 것이 단위의 status 이고, 끝난 것은 앞의 셋뿐이다. 그래서 임의 `중단`은 현재 단위를 카운터 그대로 `pending` 으로 남긴다: 재개는 그 단위를 남은 예산으로 이어서 들어가지, 예산을 새로 주며 처음부터 돌리지도 않고 상한에 닿은 것처럼 버리지도 않는다.
+- **단위가 시작할 때, 커밋하자마자, 그리고 끝날 때 쓴다** — 끝날 때만이 아니다. 가운데 쓰기가 Step 3 도중의 중단을 구현 루프가 아니라 완료 표시부터 재개하게 만든다(`SKILL.md` §인자). 그게 없으면 `pending` 이면서 커밋을 담은 체크포인트 상태가 아예 존재하지 않는다. 도중에 중단된 단위도 `start_commit` 과 `dirty_at_start` 가 이미 디스크에 있어야 한다. 없으면 재개가 복원할 기준선이 없어, 그 단위 자신의 작업으로 dirty 해진 트리에서 기준선을 다시 만들어 낸다.
+- **`status`** 는 Phase 4 어휘에 `pending` 을 더한 것이다: `done` ✅ · `capped` ⚠️ · `skipped` ⏭️ · `unverified` ❓(끝났지만 전략이 주장한 테스트가 없음) · `pending`(**미완료** — 시작 안 했거나, *또는* 도중에 중단됨). `pending` 을 뺀 나머지는 다 끝난 것이다. 카운터는 `done` 에서 지워지고, `capped` 와 **`attempted: true` 인 `skipped`** 에서 올라가며, `unverified` 는 어느 쪽으로도 움직이지 않는다(`SKILL.md`). `skipped` 에 그 플래그가 필요한 이유: Step 2 *이전에* hard stop 에서 거절된 항목과 거기 진입한 뒤 포기된 항목이 같은 status 로 저장되는데 `autonomy.md` 는 둘째만 센다 — 필드가 없으면 올바르게 거절한 security 질문 둘이 아무것도 실패하지 않은 실행을 세우고, 이후 어떤 체크포인트 읽기도 그러면 안 됐다는 것을 알 수 없다. 판정을 여기 저장하고 다시 계산하지 않는 것이 재개된 실행이 ❓ 행을 다시 찍게 해 주는 것이다 — `tests` 옆의 `tests_claimed` 와 함께. *실제로 쓴* 것만 보고하는 행은 `none` 을 주장한 단위가 한 적 없는 주장을 못 지켰다고 말하게 된다. 변경 집합은 재개 시점에 이미 없으므로 문제된 경로는 다시 찍지 않는다. 남는 것은 주장과 그것을 확인해 준 것이 없다는 사실이고, 독자를 커밋으로 보내는 것이 그 둘이다. 그래서 임의 `중단`은 현재 단위를 카운터 그대로 `pending` 으로 남긴다: 재개는 그 단위를 남은 예산으로 이어서 들어가지, 예산을 새로 주며 처음부터 돌리지도 않고 상한에 닿은 것처럼 버리지도 않는다.
 - **`dirty_at_start` 는 저장하지 다시 뜨지 않는다.** 이것이 단위 기준선의 나머지 절반이고, 재개 시점의 트리는 *이 단위 자신의 작업*으로 dirty 하다 — 거기서 다시 스냅샷을 뜨면 자기 편집을 남의 것으로 분류해 커밋에서 빠뜨리거나 재개할 때마다 멈추게 된다. `null` 은 아직 시작 안 함, `[]` 는 깨끗한 트리에서 시작했음을 뜻한다.
 - **그룹 단위는 worker 를 기록한다.** 재개는 `state` 가 `returned`·`merged` 가 아닌 worker 만 다시 띄우고, 이미 있는 브랜치는 재사용하지 다시 만들지 않는다. 이것이 없으면 그룹 도중에 발동한 브레이크가 끝난 worker 의 브랜치를 버리거나 두 번 머지한다.
 - **`SKILL.md` 스코프 표에 이름이 오른 모든 카운터가 그 표가 지정한 스코프로 여기에 있다** — 동기화할 목록이 아니라 규칙으로: `build_iterations` 와 `start_commit` 은 단위에, `design_rounds` · `reviewer_invocations` · `tdd_behaviours` · `tdd_attempts` 는 항목에, `consecutive_failures` 는 최상위에. 연속 2회 정지들도 카운터다(`BUILD-LOOP.md` §2c 의 `consecutive_environmental`, `DESIGN-LOOP.md` §1d 의 `consecutive_unusable_verdicts`) — 중단을 넘으며 0으로 돌아가는 카운터는 영원히 발동하지 않는 정지다. 카운터를 잘못된 층에 저장하는 것이 재개가 항목에 새 예산을 조용히 쥐여 주는 경로다.
-- `--resume` 은 이 프로젝트의 가장 최근 체크포인트를 읽고 **status 가 `pending` 인 첫 단위**부터 잇는다. `capped`·`skipped` 단위는 끝난 것이지 재시도 대상이 아니다. `pending` 단위가 하나도 없는 체크포인트는 완료된 실행이다 — 그렇게 말하고 멈춘다. 여기 저장된 레벨은 권한이 **아니다**: 무인 재개에는 `--auto` 를 다시 붙여야 한다. 무인은 언제나 명시적 선택이기 때문이다.
+- `--resume` 은 이 프로젝트의 가장 최근 체크포인트를 읽고 **status 가 `pending` 인 첫 단위**부터 잇는다. `capped`·`skipped`·`unverified` 단위는 끝난 것이지 재시도 대상이 아니다. `pending` 단위가 하나도 없는 체크포인트는 완료된 실행이다 — 그렇게 말하고 멈춘다, **`pending_completions` 가 비어 있지 않은 경우만 빼고.** 그때는 Phase 4 의 일괄 반영으로 재진입하고 그 외에는 아무것도 하지 않는다. 여기 저장된 레벨은 권한이 **아니다**: 무인 재개에는 `--auto` 를 다시 붙여야 한다. 무인은 언제나 명시적 선택이기 때문이다.
 - **끝난 실행의 체크포인트는 지우지 않고 남긴다.** 다음 실행이 선행 분석으로 읽는 것이 이 파일이고(`PHASE-FORMAT.md` §Phase 1), 정렬과 그룹핑이 오직 여기에만 있다 — 성공했다고 지우면 신선도 표가 재사용하라고 추천하는 바로 그 기록을 지우는 것이다. 같은 `source_ref` 의 오래된 체크포인트는 정리해도 되고, 최신 것만 남기면 된다.
 - `pending_completions` 가 비지 않은 동안에는 어떤 것도 끝난 것으로 치지 않는다.
 
@@ -137,8 +143,11 @@ hard stop 도 남긴다(`H1-outward` · `H2-destructive` · `H3-tracker` · `H4-
 agreed 율   mode == "asked" 인 결정들에 대해            ≥ 0.9
 clean 율    outcome 줄이 있는 결정들에 대해              ≥ 0.9
             clean = manual_intervention=false ∧ reverted=false ∧ capped=false
+                      ∧ claim_met != "unmet"
 n (asked)   ≥ 20
 ```
+
+마지막 연언지는 그 필드를 지닌 유일한 단계인 `S2-test` 에만 문다. 이게 없으면 ❓ 단위가 줄줄이 나온 실행이 — Phase 4 가 전부 수동 확인 대상으로 표시한 그 단위들이 — 주장이 미달이었던 바로 그 결정을 자동화하라는 깨끗한 근거로 채점된다. 검사를 안 돌린 repo 는 `claim_met` 자체가 없고, 없는 필드는 이 연언지를 통과한다 — 그래서 그 결정들은 이 축에서 **clean 으로 집계된다**. 이건 덮을 구멍이 아니라 정직하게 밝힐 한계다: `report` 가 비율 옆에 `검사 안 함` 개수를 찍고, 근거가 대부분 `검사 안 함` 인 단계는 숫자가 시사하는 깨끗한 실행이 아니다.
 
 **`agreed` 는 사람이 답한 결정만 센다.** 무인 실행된 것은 `chosen == recommended` 가 구조상 참이라, 그걸 넣으면 비율이 1.0 쪽으로 부풀고 분석이 "자동화했으니 자동화해도 됐다" 로 변한다. 질문의 전부는 추천이 사람이 *골랐을* 것과 같은가이고, 그 증거는 물어본 결정에만 있다.
 
@@ -157,6 +166,7 @@ n (asked)   ≥ 20
 ```
 다이얼 근거 — 31회 실행 · 결정 214건 · outcome 있는 것 198건
 214건 중 83건이 asked 였고, 나머지는 무인 실행이라 동의 증거를 갖지 않는다.
+S2-test 주장 — met 18 · unmet 3 · unclaimed 2 · 검사 안 함 1
 
 단계          asked   agreed   clean   영향받는 이동
 S2-test          22     0.95    0.91   manual → assisted    ✓ 뒷받침됨

@@ -52,7 +52,7 @@ Silently matching by similarity would mark the wrong task done; silently droppin
 - Tasks are GitHub-flavoured checkboxes at any nesting depth: `- [ ]` open, `- [x]` done.
 - Nested items under a task are its detail, not separate tasks. Pass them along in `title` context; do not flatten them into the list.
 - `ref`: `null` — a local file has no external reference to cite.
-- `complete(id)`: rewrite that one line's `[ ]` to `[x]`. Touch nothing else — reformatting the file turns a one-character change into a diff nobody can review.
+- `complete(id)`: **re-read the file, then** rewrite that one line's `[ ]` to `[x]`. Touch nothing else — reformatting the file turns a one-character change into a diff nobody can review, and writing back the copy `list()` held since Phase 1 deletes whatever the user added to the checklist while the run was going. Those lines were never committed, so nothing can give them back.
 
 ```markdown
 ## Sprint

@@ -22,8 +22,9 @@ Chosen on entry and never revisited; the loop re-enters at 2b. Present the reaso
 | Data-state change (writes that others read) | needed | needed | **recommend** |
 | Scheduled job, batch, worker | needed | sometimes | **recommend** |
 | Field addition, mapping, rename | no | no | **do not offer** |
+| Documentation, comment or formatting — no behaviour ships | no | no | **do not offer** |
 
-TDD on a field rename is overhead wearing the costume of rigour; that is why the last row does not offer it at all.
+TDD on a field rename is overhead wearing the costume of rigour; that is why the rename row does not offer it at all, and neither does the documentation row under it.
 
 **The TDD hand-off.** When TDD is chosen and the probe found a `tdd` skill or rule, follow it and do not restate its method here. When nothing was found, use judgment within three invariants that are not the methodology's to give away:
 
@@ -32,6 +33,8 @@ TDD on a field rename is overhead wearing the costume of rigour; that is why the
 - **the attempt budget belongs to the task, not to a behaviour.** It is `min(15, 5 × the behaviours named here at 2a)`, fixed when the strategy is chosen. The flat 15 is what makes it a cap: a product whose multiplicand is chosen by the thing being capped is not one — name twelve behaviours for a validation task and 5-per-behaviour quietly becomes sixty unattended attempts. Per-behaviour alone is not a cap: the behaviour count is the methodology's to choose, so 16 behaviours would buy 80 attempts, none of them a build-loop iteration. Splitting a behaviour later divides that budget; it never adds to it. A delegated methodology governs *how* to iterate, never *how long*
 
 TDD is unavailable on any executor that cannot run the test command; say so at 2a rather than discovering it at 2c.
+
+**This choice is checked against what the unit produces.** Anything but `none` claims the unit will carry tests, and Step 3 reads the paths this unit wrote to see whether it does (`SKILL.md`). So `none` is the right answer for **the two rows that need no test at all** — and it is answered here, on the change shape, rather than later when the tests turn out not to exist.
 
 ---
 
@@ -61,13 +64,17 @@ Resolve the command in this order, and report which rung you used:
 | `build.gradle` / `build.gradle.kts` | `./gradlew test` · `.\gradlew.bat test` on Windows |
 | `pom.xml` | `mvn -q test` |
 | `Cargo.toml` | `cargo test` |
-| `pyproject.toml` / `setup.cfg` | `pytest` |
+| `pyproject.toml` / `setup.cfg` / `pytest.ini` / `tox.ini` | `pytest` |
 | `go.mod` | `go test ./...` |
 | `Makefile` with a `test` target | `make test` |
 
 **The first verification is free.** The counter exists to bound *repair*, not to charge for finding out.
 
-**Environment failures are not iterations, and the classification is checked rather than asserted.** A failure is environmental only when **the same command fails the same way at the unit's start commit** — run it there and compare. Run it in a throwaway worktree, never by moving this one: `git worktree add --detach <unit-start-commit>`, run, remove it (that removal is the cleanup carve-out's own case). Checking out or stashing to make room would put the implementation you are testing through the very operations `autonomy.md` §2 calls destructive. Otherwise a task that *adds* Redis produces an `ECONNREFUSED` that is verbatim "a database that is not running", buys unlimited free iterations, and never reaches the stated escape ("re-run once the environment is up") because the change under test created the condition.
+**Environment failures are not iterations, and the classification is checked rather than asserted.** A failure is environmental only when **the same command fails the same way at the unit's start commit** — run it there and compare. Run it in a throwaway worktree, never by moving this one: `git worktree add --detach <path> <unit-start-commit>`, run, remove it. **Both arguments, in that order.** Given only a commit, git reads it as the *path* — it creates a directory named after the hash, checks out HEAD into it, and exits 0, so the comparison becomes HEAD against HEAD and every failure classifies as environmental. **Put that path outside the repository**: inside, it is an untracked directory created after this unit took its baseline, so it lands in **this** unit's own change set and draws an overreach prompt at its commit.
+
+Removing it is asked, like any worktree removal that `references/autonomy.md` §2's carve-out does not reach — and it does not reach this one, because a detached worktree has no branch for that rule's merged-branch test to evaluate. Two environmental verdicts in a row already stop and ask, which bounds what the prompts cost. Checking out or stashing to make room would put the implementation you are testing through the very operations `autonomy.md` §2 calls destructive. Otherwise a task that *adds* Redis produces an `ECONNREFUSED` that is verbatim "a database that is not running", buys unlimited free iterations, and never reaches the stated escape ("re-run once the environment is up") because the change under test created the condition.
+
+**If the command cannot start there at all** — no runner, no build, nothing to execute — the classification has no input, so say so and ask. It does not cover a *missing dependency*: that failure runs, matches at the start commit, and classifies as environmental even when the unit's own change is what needs the dependency. The paragraph above is what governs there, and the limit is worth knowing rather than assuming this sentence closes it.
 
 Two consecutive environmental verdicts stop and ask, even when both check out. An environment still down after one round is not something this loop repairs, and the budget it is not consuming is not the point — the run is.
 
