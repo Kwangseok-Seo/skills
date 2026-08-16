@@ -166,7 +166,8 @@ Decisions made on your behalf (level auto)
 | task | step      | chose        | because                          | outcome        |
 |------|-----------|--------------|----------------------------------|----------------|
 | 1    | S1-design | skip loop    | 1 file, no new interface         | clean          |
-| 1,3  | S2-test   | unit+int     | the group's widest surface       | 1 re-verify (G1) |
+| 1    | S2-test   | unit+int     | endpoint touching storage        | 1 re-verify (G1) |
+| 3    | S2-test   | unit+int     | new permission surface           | 1 re-verify (G1) |
 | 3    | S1-design | 2 rounds     | new auth surface                 | 1 blocking fix |
 | 2    | S2-test   | unit+int     | cache layer is an integration    | 3 re-verify ⚠️ |
 | 2    | S2-review | local diff   | no PR; gh present, branch unpushed | 1 finding     |

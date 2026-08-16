@@ -15,6 +15,8 @@ Anything that claims to be an executor must satisfy all five. Write against the 
 
 Verify / review / commit are **not** the executor's job. They run afterwards, per group, sequentially, in the main thread — one budget, one reviewer, one commit convention.
 
+**The test strategy is not the executor's either, and it goes the other way round: `S2-test` is chosen per task, in the main thread, *before* that task's worker is dispatched, and it goes in the brief.** It names what will verify the task, so choosing it after the merge means choosing it with the workers' tests, or their absence, already on screen — and Step 3 would then be checking a claim against the thing that produced it, which no unit can fail. Decided up front it is a commitment the worker is asked to meet.
+
 ## The ladder
 
 | Rung | Requires | Isolation | Use when |
@@ -40,7 +42,7 @@ One worktree per task, one subagent per worktree:
 git worktree add -b tr/<task-id> ../<repo>-<task-id>
 ```
 
-Each subagent gets: the task, the frozen plan from Step 1, its worktree path, and its permission — stated as **what it may do**, never as a list of what it may not:
+Each subagent gets: the task, the frozen plan from Step 1, **the `S2-test` strategy chosen for it above**, its worktree path, and its permission — stated as **what it may do**, never as a list of what it may not:
 
 ```
 may     read anything · create and modify files under its own worktree path
@@ -54,10 +56,14 @@ Committing, pushing, branch operations, and running the verify command fall out 
 
 Workers return the contract's readback: changed files, a summary, and anything they could not do.
 
-**The main thread commits each worktree before merging it.** A worker writes files and stops; a branch with no commits is still pointing at the group's start commit, so `git merge --no-ff` on it prints `Already up to date`, exits 0, and merges nothing — the loudest possible silence. So, per returned worker, in its worktree: stage its written paths, commit with the repo's convention, then merge. Committing stays in the main thread because that is where the message convention and the hard stops are, not because a commit is dangerous.
+**The main thread commits each worktree before merging it.** A worker writes files and stops; a branch with no commits is still pointing at the group's start commit, so `git merge --no-ff` on it prints `Already up to date`, exits 0, and merges nothing — the loudest possible silence. So, per returned worker, in its worktree: stage what it wrote, commit with the repo's convention, then merge. Committing stays in the main thread because that is where the message convention and the hard stops are, not because a commit is dangerous.
+
+**What it wrote is read twice, and the two readings have to agree.** `git add -A` here commits whatever is in that directory — the worker's work, and equally the build output, the cache directory, the scratch file nobody gitignored. That is the discipline `SKILL.md` spends a whole section establishing for every other commit in this skill, dropped in the one place a human is furthest away. Taking the worker's returned list instead only trades it for the quieter failure: a worker that under-reports loses work at the merge and nothing says so.
+
+So compare them — the worktree's own change set, computed from the group's start commit with the two commands `SKILL.md` names, against the changed-file list the contract's third point already requires. **Equal → commit exactly that, the way Step 3 commits it**: `--only`, the readback, the argument-limit form, one act defined once and performed in another directory. **Different → stop and ask**, naming both sides, because the worker either wrote outside what it reported or reported what it did not write, and neither is a thing to merge on a guess. Compare them as **sets of repo-relative paths**, normalised first: a worker writes prose, and an absolute path, a `./` prefix or a different separator is a disagreement about spelling, not about what happened. A guard that stops on spelling gets switched off.
 
 ```bash
-git -C ../<repo>-<task-id> add -A && git -C ../<repo>-<task-id> commit -m "<convention>"
+git -C ../<repo>-<task-id> commit --only -m "<convention>" -- <the agreed paths>
 git merge --no-ff tr/<task-id>
 ```
 
@@ -73,7 +79,7 @@ A worker started read-only does not error. Its edits are refused one by one and 
 
 Merge groups in dependency order, one at a time, `--no-ff` so the group boundary stays visible in history. A conflict is a stop: report the conflicting paths and ask — *resolve it yourself and continue / abandon this group / stop the run*. Never resolve a cross-worker conflict unattended — the two workers each had a coherent plan, and picking between them is exactly the judgment the dial does not cover.
 
-After a group merges, run the full Step 2 build loop and Step 3 commit for that group in the main thread.
+After a group merges, run Step 2 for that group in the main thread starting at **2c** — the strategy was chosen before dispatch and the implementation is what just merged — re-entering at 2b for repairs like any other iteration, then Step 3.
 
 **The hard stops are evaluated here.** A worker cannot prompt, so the four classes are checked in the main thread against the group's change set — the pinned set from `SKILL.md`, computed from the group's own start commit, which survives the merge that empties the working tree. A security surface written by a worker is asked about the same as one written sequentially, just later in the cycle. Requests workers handed back are answered in the same place, with the same classes applied.
 

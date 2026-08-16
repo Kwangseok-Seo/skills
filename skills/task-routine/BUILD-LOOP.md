@@ -12,7 +12,7 @@ One budget, one loop. The example running through this file is task 2 of the `PH
 
 ## 2a · Strategy — decided once
 
-Chosen on entry and never revisited; the loop re-enters at 2b. Present the reasoning **before** the options — a recommendation whose basis is invisible cannot be disagreed with.
+Chosen on entry and never revisited; the loop re-enters at 2b. For a merged group that entry is **before the workers are dispatched, once per task** — after the merge the strategy would be picked with their output already visible (`references/execution.md`). Present the reasoning **before** the options — a recommendation whose basis is invisible cannot be disagreed with.
 
 | Change shape | Unit | Integration | TDD |
 |---|---|---|---|
