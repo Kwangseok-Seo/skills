@@ -36,7 +36,7 @@ The gates below are the contract: entry conditions, caps, and hard stops. Everyt
 | [references/setup.md](./references/setup.md) | first run, or `setup` argument — wizard, config schema, capability probe |
 | [references/sources.md](./references/sources.md) | resolving tasks — adapter contract, local-markdown and GitHub implementations |
 | [references/autonomy.md](./references/autonomy.md) | every run, before Phase 1 — level × tier table, hard-stop detection, brake semantics |
-| [references/execution.md](./references/execution.md) | more than one parallel-eligible group — executor contract and fallback ladder |
+| [references/execution.md](./references/execution.md) | any group holds two or more tasks — executor contract and fallback ladder |
 | [references/telemetry.md](./references/telemetry.md) | writing the decision log or the checkpoint, or analysing either — both schemas |
 
 Read each at most once per session. Do not read `execution.md` on a sequential run; do not read `setup.md` when config already exists.
@@ -74,7 +74,7 @@ No arguments and config present → resolve tasks from the configured source.
 
 Ask the machine, do not trust a stored list — a snapshot goes stale the moment the user installs or removes something.
 
-Probe: external CLIs (`git`, `gh`, and any configured executor such as `codex`/`herdr`) via `command -v` / `Get-Command`; installed skills and agents under `~/.claude/skills/`, `~/.claude/agents/`, `~/.claude/plugins/installed_plugins.json`, and the project's `.claude/`. Native subagents and `git worktree` are always available and need no probe.
+Probe: external CLIs (`git`, `gh`, and any configured executor such as `codex`/`herdr`) via `command -v` / `Get-Command`; installed skills and agents under `~/.claude/skills/`, `~/.claude/agents/`, `~/.claude/plugins/installed_plugins.json`, and the project's `.claude/`. `git worktree` is always available and needs no probe. Whether a subagent can satisfy the executor contract is that contract's question, not this list's (`references/execution.md`).
 
 If the result differs from the config snapshot, **say so in one line and update it.** Capability loss must never be silent — "parallel unavailable, running sequentially" is a report, not an omission.
 
@@ -151,7 +151,7 @@ The review at 2d, the cleanup scope at 2e, every hard-stop scan, and what a comm
 
 Fetch the task list from the source, order it by dependency, group what can run in parallel, and pick an executor.
 
-Output shapes and worked judgments: **[PHASE-FORMAT.md](./PHASE-FORMAT.md)**. Read `references/execution.md` only when two or more parallel groups exist. Fewer than two tasks skips grouping entirely and goes straight to the sequential cycle.
+Output shapes and worked judgments: **[PHASE-FORMAT.md](./PHASE-FORMAT.md)**. Read `references/execution.md` when **any one group holds two or more tasks** — that is what puts concurrent workers in a shared repo, and counting *groups* instead stays silent on one group of six while tripping on six groups of one. Fewer than two tasks skips grouping entirely and goes straight to the sequential cycle.
 
 **Between resolving and ordering, predict each task's change surface.** Both ordering and grouping are judgments about files, and Step 1 produces the file list far too late to inform either. This is a scan, not a design: read the task text, search the repo for the obvious owners, write one line of paths per task. Bound it — one search sweep per task, no reading beyond what the sweep returns, and paths left as `?` when it found nothing rather than guessed. **A `?` task is ordered sequentially**, because disjointness cannot be proven from an unknown.
 
@@ -193,6 +193,7 @@ Verify-command detection, review tooling, cleanup scope, and the TDD hand-off: *
 
 **Step 3 · Commit and mark done.** Derive the message convention from the repo (`git log --pretty=%s`, last ~20), falling back to `<type>: <summary>`; include the task reference when the source gives one.
 - Decision `S3-commit`, tier `auto-eligible`. It stages the unit's change set and nothing else. Committing is local and reversible; pushing is not, and pushing is a hard stop.
+- **A merged group's per-task commits are the worker-branch commits**, made before each merge (`references/execution.md`). This step therefore covers only what the post-merge loop itself changed, which on a group that needed no repair is nothing at all.
 - Then mark it done **in the source**, at the tier **the source dictates, not the step**: local writes through immediately, remote is held `pending` and flushed in Phase 4 (`references/sources.md`). Without this, `--resume` redoes work it already committed.
 
 ## Phase 4 — Summary

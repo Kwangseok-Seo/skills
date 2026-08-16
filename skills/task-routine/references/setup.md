@@ -78,7 +78,7 @@ Runs **every** run, not just at setup.
 | External CLIs | `command -v <name>` · PowerShell `Get-Command <name> -ErrorAction SilentlyContinue` | `git`, `gh`, plus any configured executor |
 | Skills and agents | list `~/.claude/skills/*/`, `~/.claude/agents/*.md`, and the project's `.claude/` | how `tdd`, review, and simplify tooling are found |
 | Plugins | `~/.claude/plugins/installed_plugins.json` — `{"plugins": {"<name>@<marketplace>": [{"installPath": …}]}}` | v2 schema |
-| Native | none — subagents and `git worktree` are always present | needs `git`, which is already required |
+| Native | none — `git worktree` is always present | whether a subagent satisfies the executor contract is `execution.md`'s question |
 
 The snapshot the probe compares against is the `capabilities` key above — written by the probe after every run, never hand-edited, and never read as truth. **It is a cache for detecting drift, never the source of truth.** Duplicating the capability list into config and trusting it is exactly how a stored list and reality come apart: the user installs a tool and the skill never notices, or removes one and the skill keeps routing to it.
 

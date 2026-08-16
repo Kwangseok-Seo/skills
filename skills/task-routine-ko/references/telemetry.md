@@ -22,7 +22,8 @@
   "skill_version": "task-routine@1.0.0",
   "model": "<아는 경우 모델 id>",
   "source_ref": "TODO.md",
-  "task_id": "cache-list-responses",  // 어댑터의 안정 id. 항목 선택 전이면 null
+  "task_id": "cache-list-responses",  // 어댑터의 안정 id. 결정이 항목이 아니라 유닛에 속하면
+                                      // id 의 배열. 아직 아무 항목도 고르기 전이면 null
   "step_id": "S2-test",
   "risk_tier": "auto-eligible",
   "level": "auto",                    // 그 시점의 다이얼
@@ -53,6 +54,8 @@
 ```
 
 `recommended_index` 와 `chosen_index` 는 **이 줄에 실제로 쓴 `options` 배열** 기준 인덱스다 — 문서의 번호 매긴 목록에서 옮기지 말고 배열에서 센다. 옵션은 재배열되기 마련이고, 낡은 인덱스는 없던 불일치를 조용히 기록한다.
+
+**결정은 그것이 내려진 스코프에서 한 번 기록하고, `task_id` 가 그 스코프를 적는다.** 머지된 그룹은 일부 결정을 유닛 전체에 대해 한 번 내린다. 그것을 항목별로 풀어 쓰면 판단 하나가 나중에 다이얼을 올릴 때 쓰는 `n (asked)` 모집단에 여러 번 계상되고, 나중에는 어떤 질의로도 복제본을 구분할 수 없다.
 
 ## 체크포인트
 

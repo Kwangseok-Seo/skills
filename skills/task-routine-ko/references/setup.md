@@ -78,7 +78,7 @@ auto       auto-eligible 전부 알아서 진행 — 기본값이 아니고, 절
 | 외부 CLI | `command -v <이름>` · PowerShell `Get-Command <이름> -ErrorAction SilentlyContinue` | `git`, `gh`, 설정된 실행자 |
 | 스킬·에이전트 | `~/.claude/skills/*/`, `~/.claude/agents/*.md`, 프로젝트 `.claude/` 열거 | `tdd`·리뷰·simplify 도구를 여기서 찾는다 |
 | 플러그인 | `~/.claude/plugins/installed_plugins.json` — `{"plugins": {"<이름>@<마켓>": [{"installPath": …}]}}` | v2 스키마 |
-| 네이티브 | 없음 — 서브에이전트와 `git worktree` 는 항상 있다 | `git` 이 필요하고 그건 이미 필수 |
+| 네이티브 | 없음 — `git worktree` 는 항상 있다 | 서브에이전트가 실행자 계약을 만족하는지는 `execution.md` 가 답할 질문 |
 
 프로브가 대조하는 스냅샷은 위의 `capabilities` 키다 — 매 실행 후 프로브가 쓰고, 손으로 고치지 않고, 진실로 읽지 않는다. **변화를 감지하기 위한 캐시이지 진실의 원천이 아니다.** 능력 목록을 config 에 복제하고 그걸 믿는 것이 바로 저장된 목록과 실물이 갈라지는 경로다 — 사용자가 도구를 깔았는데 스킬이 모르거나, 지웠는데 계속 그리로 보낸다.
 

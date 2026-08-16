@@ -36,7 +36,7 @@ argument-hint: "[setup|report] [--source=<ref>] [--todos=1,3] [--level=manual|as
 | [references/setup.md](./references/setup.md) | 첫 실행 또는 `setup` 인자 — 위저드, config 스키마, 능력 프로브 |
 | [references/sources.md](./references/sources.md) | 작업 해석 시 — 어댑터 계약, 로컬 마크다운·GitHub 구현 |
 | [references/autonomy.md](./references/autonomy.md) | 매 실행, Phase 1 이전 — 레벨 × 등급 표, hard stop 판정, 브레이크 의미론 |
-| [references/execution.md](./references/execution.md) | 병렬 가능 그룹이 2개 이상일 때 — 실행자 계약과 폴백 사다리 |
+| [references/execution.md](./references/execution.md) | 한 그룹이라도 항목을 2개 이상 담을 때 — 실행자 계약과 폴백 사다리 |
 | [references/telemetry.md](./references/telemetry.md) | 결정 로그나 체크포인트를 쓸 때, 또는 둘 중 하나를 분석할 때 — 두 스키마 |
 
 각 파일은 세션당 최대 1회. 순차 실행이면 `execution.md` 를 읽지 않고, config 가 이미 있으면 `setup.md` 를 읽지 않는다.
@@ -74,7 +74,7 @@ argument-hint: "[setup|report] [--source=<ref>] [--todos=1,3] [--level=manual|as
 
 저장된 목록을 믿지 말고 실물에 묻는다 — 스냅샷은 사용자가 뭔가를 깔거나 지운 순간 썩는다.
 
-프로브 대상: 외부 CLI(`git`, `gh`, 그리고 설정된 실행자 `codex`/`herdr` 등)를 `command -v` / `Get-Command` 로, 설치된 스킬·에이전트를 `~/.claude/skills/`·`~/.claude/agents/`·`~/.claude/plugins/installed_plugins.json`·프로젝트 `.claude/` 에서. 네이티브 서브에이전트와 `git worktree` 는 항상 있으므로 프로브 불요.
+프로브 대상: 외부 CLI(`git`, `gh`, 그리고 설정된 실행자 `codex`/`herdr` 등)를 `command -v` / `Get-Command` 로, 설치된 스킬·에이전트를 `~/.claude/skills/`·`~/.claude/agents/`·`~/.claude/plugins/installed_plugins.json`·프로젝트 `.claude/` 에서. `git worktree` 는 항상 있으므로 프로브 불요. 서브에이전트가 실행자 계약을 만족하는지는 이 목록이 아니라 그 계약이 답할 질문이다(`references/execution.md`).
 
 config 스냅샷과 다르면 **한 줄로 알리고 갱신한다.** 능력 상실은 절대 조용히 넘어가지 않는다 — "병렬 불가, 순차로 진행" 은 보고이지 생략이 아니다.
 
@@ -151,7 +151,7 @@ config 스냅샷과 다르면 **한 줄로 알리고 갱신한다.** 능력 상�
 
 소스에서 작업 목록을 가져와 의존성으로 정렬하고, 병렬 가능한 것을 묶은 뒤 실행자를 고른다.
 
-출력 형태와 판단 예시: **[PHASE-FORMAT.md](./PHASE-FORMAT.md)**. 병렬 그룹이 2개 이상일 때만 `references/execution.md` 를 읽는다. 항목이 2개 미만이면 그룹핑을 통째로 건너뛰고 순차 사이클로 간다.
+출력 형태와 판단 예시: **[PHASE-FORMAT.md](./PHASE-FORMAT.md)**. **한 그룹이라도 항목을 2개 이상 담으면** `references/execution.md` 를 읽는다 — 공유 repo 에 동시 워커를 넣는 조건이 그것이고, *그룹 수*로 세면 6항목짜리 그룹 1개에서는 침묵하고 1항목짜리 그룹 6개에서는 발동한다. 항목이 2개 미만이면 그룹핑을 통째로 건너뛰고 순차 사이클로 간다.
 
 **해석과 정렬 사이에서 각 항목의 변경 표면을 예측한다.** 정렬도 그룹핑도 파일에 대한 판단인데, Step 1 이 내놓는 파일 목록은 둘 다에 쓰기엔 너무 늦다. 이건 설계가 아니라 스캔이다: 항목 텍스트를 읽고, 명백한 소유 파일을 repo 에서 검색하고, 항목당 경로 한 줄을 적는다. 범위를 묶는다 — 항목당 검색 1회, 검색이 돌려준 것 이상은 읽지 않기, 아무것도 못 찾으면 추측하지 말고 경로를 `?` 로 남기기. **`?` 인 항목은 순차로 정렬한다** — 모르는 것으로부터 서로소를 증명할 수는 없다.
 
@@ -193,6 +193,7 @@ config 스냅샷과 다르면 **한 줄로 알리고 갱신한다.** 능력 상�
 
 **Step 3 · 커밋과 완료 표시.** 커밋 메시지 컨벤션은 repo 에서 끌어온다(`git log --pretty=%s`, 최근 ~20건). 안 잡힐 때만 `<type>: <summary>` 폴백, 소스가 참조를 주면 포함한다.
 - 결정 `S3-commit`, 등급 `auto-eligible`. 단위의 변경 집합만 스테이징하고 그 밖은 담지 않는다. 커밋은 로컬이고 가역이다. push 는 아니고, push 는 hard stop 이다.
+- **머지된 그룹의 항목별 커밋은 머지 전에 worker 브랜치에서 만든 커밋이다**(`references/execution.md`). 그러니 이 단계가 덮는 것은 머지 이후 루프가 스스로 바꾼 것뿐이고, 수리가 필요 없던 그룹에서는 그것이 아무것도 아니다.
 - 이어서 **소스에** 완료를 표시하되 등급은 단계가 아니라 **소스가 정한다**: 로컬은 즉시 반영, 원격은 `pending` 으로 쥐다가 Phase 4 에서 일괄(`references/sources.md`). 이게 없으면 `--resume` 이 이미 커밋한 일을 다시 한다.
 
 ## Phase 4 — 요약

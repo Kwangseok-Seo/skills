@@ -1,6 +1,6 @@
 # execution — the executor contract and its fallback ladder
 
-> Read only when Phase 3 produced **two or more parallel-eligible groups**. A sequential run never needs this file.
+> Read when **any group Phase 3 produced holds two or more tasks** — that, not the number of groups, is what puts concurrent workers in one repo. A sequential run never needs this file.
 
 ## The contract
 

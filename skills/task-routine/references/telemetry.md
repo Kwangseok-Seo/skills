@@ -22,7 +22,9 @@ A **decision** is written when the choice is made. An **outcome** is written in 
   "skill_version": "task-routine@1.0.0",
   "model": "<model id, when known>",
   "source_ref": "TODO.md",
-  "task_id": "cache-list-responses",  // the adapter's stable id; null before a task is picked
+  "task_id": "cache-list-responses",  // the adapter's stable id; an ARRAY of ids when the
+                                      // decision belongs to a unit rather than a task;
+                                      // null before any task is picked
   "step_id": "S2-test",
   "risk_tier": "auto-eligible",
   "level": "auto",                    // the dial at the time
@@ -53,6 +55,8 @@ A **decision** is written when the choice is made. An **outcome** is written in 
 ```
 
 `recommended_index` and `chosen_index` are indices into **the `options` array as actually written on this line** — count them from the array, never from a numbered list in a document. Options get reordered; a stale index silently records disagreement where there was none.
+
+**A decision is logged once at the scope it was taken, and `task_id` records that scope.** A merged group takes some decisions once for the whole unit; writing those out per task multiplies one judgment across the `n (asked)` population the dial is later raised from, and no query can tell the copies apart afterwards.
 
 ## The checkpoint
 
