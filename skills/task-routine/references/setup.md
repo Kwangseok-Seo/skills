@@ -11,7 +11,7 @@ What happens next depends on **why** the wizard ran: invoked explicitly as `setu
 | # | Question | Default offered |
 |---|---|---|
 | 1 | Where do tasks come from? | a `TODO.md` in the repo if one exists, else ask |
-| 2 | How is a change verified? | the repo fingerprint (`BUILD-LOOP.md` §2c) — pressing through it **is** the approval that command needs |
+| 2 | How is a change verified? | the repo fingerprint (`BUILD-LOOP.md` §2c) — pressing through it **is** the approval that command needs. When the fingerprint matches nothing there is no default to press through: ask outright, and the typed answer is rung 3, approved by the typing |
 | 3 | How much should run unattended? | `assisted` |
 | 4 | How many tasks may one unattended run process? | `5` |
 

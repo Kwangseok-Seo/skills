@@ -118,6 +118,8 @@ Two in a row stops earlier than the ceiling. A second consecutive dispatch that 
 
 Exit on the **first** clean verdict — `APPROVE`, or zero blocking findings. Rounds are a ceiling, not a quota; spending a third round on an already-clean design costs a subagent and buys nothing.
 
+`APPROVE_WITH_CHANGES` with every blocking finding applied **is** that clean verdict, and it exits here rather than looping back to 1c. The verdict's own definition is "fix these, then build"; returning to hear that the fixes are fixed spends an invocation on an answer nobody doubted. Name the applied fixes in the freeze so the record carries them. One exception reopens the loop: a blocking fix that moves the **surface itself** — a new public method, a schema change, a new dependency — for the same reason a later task extending that surface would.
+
 ```
 Review — task 3 · rung 2 · round 2
 APPROVE
