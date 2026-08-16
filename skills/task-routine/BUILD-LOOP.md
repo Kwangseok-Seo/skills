@@ -86,9 +86,13 @@ Runs **only after 2c passed**. Pick tooling from the probe:
 
 | Available | Use |
 |---|---|
-| A review skill or plugin | run it |
+| A review skill or plugin | run it — **on this run's repo, given this unit's set** |
 | A review command the user must type | print the exact command and wait — never invoke it yourself |
 | Nothing | review the unit's change set (`SKILL.md`) directly against the plan |
+
+**A tool that resolves its target from somewhere other than this run's repo is not the first row at all.** Measured: a review plugin installed in the session reviewed the session's own working directory, not the repo the run was driving — it would have reported on a different project's diff and called it this unit's review. Descend a rung and report the descent, exactly as for a tool that is absent.
+
+**Hand the tool the set** — as paths, or as a diff restricted to them. A tool that cannot be scoped that way still runs, but what it read was the working tree: say so, and read its findings against the set yourself, because a finding on a path outside the set is somebody else's uncommitted work and reopening the loop for it spends this unit's budget on a change it did not make.
 
 The third row is a real review, not a fallback apology: the plan from Step 1 is the specification, and diffing intent against implementation is exactly what a reviewer does. It is also where reading the tree instead of the set fails silently — after a group merges there is nothing in the tree to read, and a review of nothing reports nothing.
 

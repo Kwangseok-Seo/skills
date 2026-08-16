@@ -6,7 +6,11 @@
 ~/.claude/task-routine/<project-slug>/decisions.jsonl
 ```
 
-`<project-slug>` is the repo path with separators replaced by `-`. `TASK_ROUTINE_DIR` overrides the root. Outside the repo, always — an unattended run that stages files must not be able to commit its own log.
+`<project-slug>` is the **basename of the repo root, cut to 32 characters, then a hyphen and the first 8 hex characters of a SHA-256 of that root's full path** — `auto-trial-9f3a1c2e`. Take the root from `git rev-parse --show-toplevel`, not from the path the run was invoked with, so the same repo reached two ways does not accumulate two logs.
+
+**Not the full path with separators replaced.** That makes the state path grow with the repo's depth, and on Windows it crosses `MAX_PATH`: measured, at 260 characters the shell writes `decisions.jsonl` and a Python reader reports that file does not exist, so `report` prints an empty scorecard for a project whose log is on disk — the same content at 157 characters reads fine. A directory left by the old naming is not moved or merged; say once that it is there, so its evidence can be carried across deliberately instead of starting over in silence.
+
+`TASK_ROUTINE_DIR` overrides the root. Outside the repo, always — an unattended run that stages files must not be able to commit its own log.
 
 ## Two record kinds, never one edited twice
 
@@ -16,9 +20,9 @@ A **decision** is written when the choice is made. An **outcome** is written in 
 // decision — written at the moment of choosing
 {
   "kind": "decision",
-  "id": "d-20260816T0914-3",          // <run_id>-<n>, unique within the log
+  "id": "d-20260816T0914Z-a3f-3",          // <run_id>-<n>, unique within the log
   "ts": "2026-08-16T09:14:22+09:00",
-  "run_id": "20260816T0914",
+  "run_id": "20260816T0914Z-a3f",
   "skill_version": "task-routine@1.0.0",
   "model": "<model id, when known>",
   "source_ref": "TODO.md",
@@ -41,7 +45,7 @@ A **decision** is written when the choice is made. An **outcome** is written in 
 // outcome — written in Phase 4, appended, never merged into the line above
 {
   "kind": "outcome",
-  "decision_id": "d-20260816T0914-3",
+  "decision_id": "d-20260816T0914Z-a3f-3",
   "ts": "2026-08-16T09:31:05+09:00",
   "build_iterations": 3,
   "design_rounds": 0,

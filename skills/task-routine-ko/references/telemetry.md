@@ -6,7 +6,11 @@
 ~/.claude/task-routine/<project-slug>/decisions.jsonl
 ```
 
-`<project-slug>` 은 repo 경로의 구분자를 `-` 로 바꾼 것. `TASK_ROUTINE_DIR` 로 루트를 바꾼다. 언제나 repo 밖이다 — 파일을 스테이징하는 무인 실행이 자기 로그를 커밋할 수 있으면 안 된다.
+`<project-slug>` 은 **repo 루트의 basename 을 32자로 자른 것 + 하이픈 + 그 루트 전체 경로의 SHA-256 앞 8자리 hex** 다 — `auto-trial-9f3a1c2e`. 루트는 실행이 호출된 경로가 아니라 `git rev-parse --show-toplevel` 에서 가져온다. 같은 repo 를 두 경로로 접근해도 로그가 둘로 갈리지 않게.
+
+**경로 전체의 구분자를 치환한 것이 아니다.** 그러면 상태 경로 길이가 repo 깊이에 비례해 자라고, Windows 에서 `MAX_PATH` 를 넘는다: 실측으로 260자에서 셸은 `decisions.jsonl` 을 쓰는데 파이썬 리더는 그 파일이 없다고 답한다 — 로그가 디스크에 있는 프로젝트에 `report` 가 빈 스코어카드를 찍는다. 같은 내용이 157자에서는 정상으로 읽힌다. 옛 이름으로 남은 디렉터리는 옮기지도 합치지도 않는다. 거기 있다고 한 번 말해서, 증거를 조용히 처음부터 다시 쌓는 대신 의도적으로 옮겨 갈 수 있게 한다.
+
+`TASK_ROUTINE_DIR` 로 루트를 바꾼다. 언제나 repo 밖이다 — 파일을 스테이징하는 무인 실행이 자기 로그를 커밋할 수 있으면 안 된다.
 
 ## 레코드 두 종류, 한 줄을 두 번 고치는 일은 없다
 
@@ -16,9 +20,9 @@
 // decision — 고르는 순간에 기록
 {
   "kind": "decision",
-  "id": "d-20260816T0914-3",          // <run_id>-<n>, 로그 안에서 유일
+  "id": "d-20260816T0914Z-a3f-3",          // <run_id>-<n>, 로그 안에서 유일
   "ts": "2026-08-16T09:14:22+09:00",
-  "run_id": "20260816T0914",
+  "run_id": "20260816T0914Z-a3f",
   "skill_version": "task-routine@1.0.0",
   "model": "<아는 경우 모델 id>",
   "source_ref": "TODO.md",
@@ -40,7 +44,7 @@
 // outcome — Phase 4 에서 append. 위 줄에 병합하지 않는다
 {
   "kind": "outcome",
-  "decision_id": "d-20260816T0914-3",
+  "decision_id": "d-20260816T0914Z-a3f-3",
   "ts": "2026-08-16T09:31:05+09:00",
   "build_iterations": 3,
   "design_rounds": 0,
