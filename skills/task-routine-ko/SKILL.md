@@ -74,7 +74,7 @@ argument-hint: "[setup|report] [--source=<ref>] [--todos=1,3] [--level=manual|as
 
 저장된 목록을 믿지 말고 실물에 묻는다 — 스냅샷은 사용자가 뭔가를 깔거나 지운 순간 썩는다.
 
-프로브 대상: 외부 CLI(`git`, `gh`, 그리고 설정된 실행자 `codex`/`herdr` 등)를 `command -v` / `Get-Command` 로, 설치된 스킬·에이전트를 `~/.claude/skills/`·`~/.claude/agents/`·`~/.claude/plugins/installed_plugins.json`·프로젝트 `.claude/` 에서. `git worktree` 는 항상 있으므로 프로브 불요. 서브에이전트가 실행자 계약을 만족하는지는 이 목록이 아니라 그 계약이 답할 질문이다(`references/execution.md`).
+프로브 대상: 외부 CLI(`git`, `gh`, 그리고 config 가 정했으면 `execution.executor.command`)를 `command -v` / `Get-Command` 로, 설치된 스킬·에이전트를 `~/.claude/skills/`·`~/.claude/agents/`·`~/.claude/plugins/installed_plugins.json`·프로젝트 `.claude/` 에서. `git worktree` 는 항상 있으므로 프로브 불요. 서브에이전트가 실행자 계약을 만족하는지는 이 목록이 아니라 그 계약이 답할 질문이다(`references/execution.md`).
 
 config 스냅샷과 다르면 **한 줄로 알리고 갱신한다.** 능력 상실은 절대 조용히 넘어가지 않는다 — "병렬 불가, 순차로 진행" 은 보고이지 생략이 아니다.
 

@@ -90,7 +90,7 @@
 
 | 단 | 요건 | 격리 |
 |---|---|---|
-| 설정된 멀티플렉서 | 프로브가 CLI 를 찾았고 **그리고** 세션 env 가 살아 있음 | 자체 pane / worktree |
+| 설정된 멀티플렉서 | `execution.executor` 설정, 그 `command` 를 찾음, `session_env` 가 비어 있지 않음 | 자체 pane / worktree |
 | 네이티브 서브에이전트 | 항상 가능 | 항목당 `git worktree` 1개 |
 | 순차 | — | 없음 |
 
@@ -107,7 +107,7 @@
   ⚠️ 1과 2가 src/api/list.ts 를 함께 건드린다 — 영역이 달라 병렬 대신 순서를 줬다
 
 실행자  네이티브 서브에이전트 + git worktree
-        멀티플렉서 미설정 · codex 미설치 → 3단 중 2단
+        config 에 execution.executor 없음 → 3단 중 2단
 ```
 
 ---

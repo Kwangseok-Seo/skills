@@ -42,13 +42,16 @@ Two files. Project wins over global, **key by key** — a project that sets only
   "auto": { "max_tasks": 5, "consecutive_failures": 2 },
   "design_loop": { "rounds": 3, "reviewer": "auto" },
   "build_loop": { "iterations": 3 },
-  "execution": { "timeout_minutes": 20 },
+  "execution": { "timeout_minutes": 20,
+                 "executor": { "command": "herdr", "session_env": "HERDR_ENV" } },
   "capabilities": { "probed_at": "2026-08-16T09:14:00+09:00",
-                    "present": ["git", "gh", "node"], "absent": ["codex", "tdd"] }
+                    "present": ["git", "gh", "node"], "absent": ["herdr", "tdd"] }
 }
 ```
 
 Every key is optional; missing keys take the defaults above. A `version` this build does not recognise is reported and the file is read on a best-effort basis for the keys it does know — never rejected outright, since a newer config on an older skill is a normal state of the world. `reviewer: "auto"` means "highest available rung" — pin it to a specific tool only when you have a reason.
+
+`execution.executor` is the only thing that makes rung 1 of the executor ladder reachable, and it has no default: **written by nobody, rung 1 does not exist.** Both fields are required — `command` is what the probe looks for on `PATH`, `session_env` names the variable whose being set and non-empty means a live session — and a `command` with no `session_env` leaves liveness with no input, so the run stays at rung 2 and says why. That is not a formality: rung 1's whole justification is *the user set one up and is watching*, and a tool that offers no signal of a live session cannot evidence the second half. It is a global-file key because a repository must not name the binary this run launches its workers with — a different question from naming its own test command, which `verify.command` answers under the approval `BUILD-LOOP.md` §2c requires.
 
 | Key | May come from |
 |---|---|
@@ -75,7 +78,7 @@ Runs **every** run, not just at setup.
 
 | Layer | How | Notes |
 |---|---|---|
-| External CLIs | `command -v <name>` · PowerShell `Get-Command <name> -ErrorAction SilentlyContinue` | `git`, `gh`, plus any configured executor |
+| External CLIs | `command -v <name>` · PowerShell `Get-Command <name> -ErrorAction SilentlyContinue` | `git`, `gh`, plus `execution.executor.command` when set |
 | Skills and agents | list `~/.claude/skills/*/`, `~/.claude/agents/*.md`, and the project's `.claude/` | how `tdd`, review, and simplify tooling are found |
 | Plugins | `~/.claude/plugins/installed_plugins.json` — `{"plugins": {"<name>@<marketplace>": [{"installPath": …}]}}` | v2 schema |
 | Native | none — `git worktree` is always present | whether a subagent satisfies the executor contract is `execution.md`'s question |
@@ -83,8 +86,8 @@ Runs **every** run, not just at setup.
 The snapshot the probe compares against is the `capabilities` key above — written by the probe after every run, never hand-edited, and never read as truth. **It is a cache for detecting drift, never the source of truth.** Duplicating the capability list into config and trusting it is exactly how a stored list and reality come apart: the user installs a tool and the skill never notices, or removes one and the skill keeps routing to it.
 
 ```
-Capabilities   git 2.45 ✓ · gh ✓ · node ✓ · codex ✗ · tdd skill ✗
-Changed        codex was present at last run, now absent → parallel drops to rung 2
+Capabilities   git 2.45 ✓ · gh ✓ · node ✓ · herdr ✗ · tdd skill ✗
+Changed        herdr was present at last run, now absent → parallel drops to rung 2
 ```
 
 The second line is the whole point of re-probing. Print it whenever anything changed; print nothing when nothing did. On the very first probe there is no snapshot to differ from — that is not a change, so write the snapshot and print only the first line.

@@ -4,7 +4,7 @@
 
 ## The contract
 
-Anything that claims to be an executor must satisfy all five. Write against the contract, never against a particular tool — that is what lets the ladder degrade without rewriting the cycle.
+Anything that claims to be an executor must satisfy all six. Write against the contract, never against a particular tool — that is what lets the ladder degrade without rewriting the cycle.
 
 1. **Isolation.** Two tasks running at once never share a working directory.
 2. **Write permission.** Workers can create and edit files. See the failure mode below.
@@ -21,7 +21,7 @@ Verify / review / commit are **not** the executor's job. They run afterwards, pe
 
 | Rung | Requires | Isolation | Use when |
 |---|---|---|---|
-| 1 · Configured multiplexer | the CLI on `PATH` **and** its session environment live | its own panes and worktrees | the user set one up and is watching |
+| 1 · Configured multiplexer | `execution.executor` set, its `command` on `PATH`, **and** its `session_env` set and non-empty | its own panes and worktrees | the user set one up and is watching |
 | 2 · Native subagents | nothing beyond `git` | one `git worktree` per task | the default whenever rung 1 is unavailable |
 | 3 · Sequential | nothing | none | one group, or a repo where worktrees are impractical |
 
@@ -32,7 +32,7 @@ Executor  rung 2 — native subagents + git worktree
           multiplexer configured (herdr) but HERDR_ENV not set → not in a live session
 ```
 
-Rung 1 details belong with whatever tool is configured; this skill only requires that it satisfy the five-point contract.
+Rung 1 details belong with whatever tool is configured; this skill requires the key above (`references/setup.md`) and that the tool satisfy the six-point contract. **With no `execution.executor` there is no rung 1 to be unavailable**: a run reporting "multiplexer not configured" is naming an absent key rather than an absent binary, and that is the state of every run until someone writes one.
 
 ## Rung 2 — native subagents with worktrees
 
@@ -78,6 +78,20 @@ A worker started read-only does not error. Its edits are refused one by one and 
 ## Merge
 
 Merge groups in dependency order, one at a time, `--no-ff` so the group boundary stays visible in history. A conflict is a stop: report the conflicting paths and ask — *resolve it yourself and continue / abandon this group / stop the run*. Never resolve a cross-worker conflict unattended — the two workers each had a coherent plan, and picking between them is exactly the judgment the dial does not cover.
+
+**Each answer says what becomes of the merge, because none of them disposes of it by default:**
+
+| Answer | The merge in progress |
+|---|---|
+| resolve it yourself and continue | stays until the resolution is staged and `git merge --continue` completes it — **not** Step 3's `--only` form, which git refuses mid-merge with one of the 128s `SKILL.md` already sorts out. Ask git whether there is still a merge to finish rather than assuming there is: `git rev-parse -q --verify MERGE_HEAD`, empty and exit 1 meaning the resolver already committed it. Unstaged, `--continue` refuses; and it takes no arguments, so the `--no-edit` reached for by analogy is a **129**, not a merge |
+| abandon this group | `git merge --abort`, **whose exit is read** — see below |
+| stop the run | stays, and the report says so: what is being handed back is a repository sitting mid-merge |
+
+Saying nothing is not the same as leaving it alone. A conflicted tree keeps the markers in tracked files, so that path stays in the unit's change set — measured, `git diff --name-only --no-renames <group-start>` lists a `UU` path — and from there it reaches 2c, the hard-stop scans, and the next unit's `dirty_at_start`.
+
+**`git merge --abort` can refuse, and one thing that refuses it is something this skill creates.** A non-zero exit means the abandon did not happen and the merge is still there. Measured and isolated: an intent-to-add entry in the index — from the `git add -N` the change-set computation requires — exits **128** with `Entry '<path>' not uptodate. Cannot merge.`, while an ordinary modified file and an untracked file both abort cleanly. When that entry is one **this run** made — the early untracked read in `SKILL.md` is what tells those from the user's — `git rm --cached` on it restores the abort, and the file stays on disk untracked. Any other cause, that one included once it turns out to be the user's: report the state and hand it over. **Never escalate to `git reset --hard`** — whatever blocked the abort is uncommitted work, and this is the one path where the repair costs more than the failure.
+
+An abort that succeeds destroys nothing the two branches do not still hold, since re-running the merge reproduces the conflicted tree; that is why `autonomy.md` §2's recoverability test does not turn it into a second question after the answer to abandon already came. **A resolution someone had already started by hand is the exception** — those edits are in neither branch — so name them and confirm before discarding them.
 
 After a group merges, run Step 2 for that group in the main thread starting at **2c** — the strategy was chosen before dispatch and the implementation is what just merged — re-entering at 2b for repairs like any other iteration, then Step 3.
 

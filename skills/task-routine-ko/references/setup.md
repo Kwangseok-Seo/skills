@@ -42,13 +42,16 @@ auto       auto-eligible 전부 알아서 진행 — 기본값이 아니고, 절
   "auto": { "max_tasks": 5, "consecutive_failures": 2 },
   "design_loop": { "rounds": 3, "reviewer": "auto" },
   "build_loop": { "iterations": 3 },
-  "execution": { "timeout_minutes": 20 },
+  "execution": { "timeout_minutes": 20,
+                 "executor": { "command": "herdr", "session_env": "HERDR_ENV" } },
   "capabilities": { "probed_at": "2026-08-16T09:14:00+09:00",
-                    "present": ["git", "gh", "node"], "absent": ["codex", "tdd"] }
+                    "present": ["git", "gh", "node"], "absent": ["herdr", "tdd"] }
 }
 ```
 
 모든 키는 선택이고, 빠지면 위 기본값이 적용된다. 이 빌드가 모르는 `version` 은 보고하되, 아는 키만 최선으로 읽는다 — 통째로 거부하지 않는다. 오래된 스킬이 새 config 를 만나는 것은 세상의 정상 상태다. `reviewer: "auto"` 는 "가능한 가장 높은 단" 을 뜻한다 — 특정 도구로 못박는 것은 이유가 있을 때만.
+
+`execution.executor` 는 실행자 사다리의 1단에 닿게 하는 유일한 것이고, 기본값이 없다: **아무도 쓰지 않았으면 1단은 존재하지 않는다.** 두 필드가 다 필요하다 — `command` 는 프로브가 `PATH` 에서 찾을 이름이고, `session_env` 는 그것이 설정돼 있고 비어 있지 않다는 사실이 곧 살아 있는 세션을 뜻하는 변수의 이름이다 — 그리고 `session_env` 없는 `command` 는 살아 있음을 판정할 입력이 없으므로 2단에 머물고 그 이유를 말한다. 형식이 아니다: 1단의 근거 전체가 *사용자가 세팅해 두고 보고 있다* 이고, 살아 있는 세션의 신호를 내놓지 않는 도구는 그 뒷절반을 증거할 수 없다. 전역 파일 키인 이유는, repo 가 이 실행이 worker 를 띄우는 바이너리의 이름을 대서는 안 되기 때문이다 — 자기 테스트 명령을 대는 것과는 다른 질문이고, 그쪽은 `BUILD-LOOP.md` §2c 가 요구하는 승인 아래 `verify.command` 가 답한다.
 
 | 키 | 올 수 있는 곳 |
 |---|---|
@@ -75,7 +78,7 @@ auto       auto-eligible 전부 알아서 진행 — 기본값이 아니고, 절
 
 | 층 | 방법 | 비고 |
 |---|---|---|
-| 외부 CLI | `command -v <이름>` · PowerShell `Get-Command <이름> -ErrorAction SilentlyContinue` | `git`, `gh`, 설정된 실행자 |
+| 외부 CLI | `command -v <이름>` · PowerShell `Get-Command <이름> -ErrorAction SilentlyContinue` | `git`, `gh`, 설정돼 있으면 `execution.executor.command` |
 | 스킬·에이전트 | `~/.claude/skills/*/`, `~/.claude/agents/*.md`, 프로젝트 `.claude/` 열거 | `tdd`·리뷰·simplify 도구를 여기서 찾는다 |
 | 플러그인 | `~/.claude/plugins/installed_plugins.json` — `{"plugins": {"<이름>@<마켓>": [{"installPath": …}]}}` | v2 스키마 |
 | 네이티브 | 없음 — `git worktree` 는 항상 있다 | 서브에이전트가 실행자 계약을 만족하는지는 `execution.md` 가 답할 질문 |
@@ -83,8 +86,8 @@ auto       auto-eligible 전부 알아서 진행 — 기본값이 아니고, 절
 프로브가 대조하는 스냅샷은 위의 `capabilities` 키다 — 매 실행 후 프로브가 쓰고, 손으로 고치지 않고, 진실로 읽지 않는다. **변화를 감지하기 위한 캐시이지 진실의 원천이 아니다.** 능력 목록을 config 에 복제하고 그걸 믿는 것이 바로 저장된 목록과 실물이 갈라지는 경로다 — 사용자가 도구를 깔았는데 스킬이 모르거나, 지웠는데 계속 그리로 보낸다.
 
 ```
-능력    git 2.45 ✓ · gh ✓ · node ✓ · codex ✗ · tdd 스킬 ✗
-변화    지난 실행엔 codex 가 있었고 지금은 없다 → 병렬이 2단으로 내려감
+능력    git 2.45 ✓ · gh ✓ · node ✓ · herdr ✗ · tdd 스킬 ✗
+변화    지난 실행엔 herdr 가 있었고 지금은 없다 → 병렬이 2단으로 내려감
 ```
 
 두 번째 줄이 재프로브의 존재 이유다. 바뀐 게 있으면 출력하고, 없으면 아무것도 출력하지 않는다. 맨 처음 프로브에는 비교할 스냅샷이 없는데, 그건 변화가 아니다 — 스냅샷을 쓰고 첫 줄만 출력한다.

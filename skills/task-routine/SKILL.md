@@ -74,7 +74,7 @@ No arguments and config present → resolve tasks from the configured source.
 
 Ask the machine, do not trust a stored list — a snapshot goes stale the moment the user installs or removes something.
 
-Probe: external CLIs (`git`, `gh`, and any configured executor such as `codex`/`herdr`) via `command -v` / `Get-Command`; installed skills and agents under `~/.claude/skills/`, `~/.claude/agents/`, `~/.claude/plugins/installed_plugins.json`, and the project's `.claude/`. `git worktree` is always available and needs no probe. Whether a subagent can satisfy the executor contract is that contract's question, not this list's (`references/execution.md`).
+Probe: external CLIs (`git`, `gh`, and `execution.executor.command` when config sets one) via `command -v` / `Get-Command`; installed skills and agents under `~/.claude/skills/`, `~/.claude/agents/`, `~/.claude/plugins/installed_plugins.json`, and the project's `.claude/`. `git worktree` is always available and needs no probe. Whether a subagent can satisfy the executor contract is that contract's question, not this list's (`references/execution.md`).
 
 If the result differs from the config snapshot, **say so in one line and update it.** Capability loss must never be silent — "parallel unavailable, running sequentially" is a report, not an omission.
 

@@ -90,7 +90,7 @@ Keeping the source order is a legitimate outcome and gets the same shape with `R
 
 | Rung | Requires | Isolation |
 |---|---|---|
-| Configured multiplexer | probe found the CLI **and** its session env is live | its own panes / worktrees |
+| Configured multiplexer | `execution.executor` set, its `command` found, its `session_env` non-empty | its own panes / worktrees |
 | Native subagents | always available | one `git worktree` per task |
 | Sequential | — | none |
 
@@ -107,7 +107,7 @@ Groups
   ⚠️ 1 and 2 both touch src/api/list.ts — different regions, so ordered rather than parallel
 
 Executor  native subagents + git worktree
-          multiplexer not configured · codex not installed → rung 2 of 3
+          no execution.executor in config → rung 2 of 3
 ```
 
 ---
