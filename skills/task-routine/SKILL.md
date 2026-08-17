@@ -28,18 +28,19 @@ The gates below are the contract: entry conditions, caps, and hard stops. Everyt
 
 ## Read-on-demand map
 
-| Read this | When |
-|---|---|
-| [PHASE-FORMAT.md](./PHASE-FORMAT.md) | entering Phase 1 — what phases 1–4 put on screen |
-| [DESIGN-LOOP.md](./DESIGN-LOOP.md) | entering Step 1 with the loop enabled — reviewer protocol |
-| [BUILD-LOOP.md](./BUILD-LOOP.md) | entering Step 2, **or the wizard's question 2** — verify/review tooling, the fingerprint table, cleanup scope, TDD hand-off |
-| [references/setup.md](./references/setup.md) | first run, or `setup` argument — wizard, config schema, capability probe |
-| [references/sources.md](./references/sources.md) | resolving tasks — adapter contract, local-markdown and GitHub implementations |
-| [references/autonomy.md](./references/autonomy.md) | every run, before Phase 1 — level × tier table, hard-stop detection, brake semantics |
-| [references/execution.md](./references/execution.md) | any group holds two or more tasks — executor contract and fallback ladder |
-| [references/telemetry.md](./references/telemetry.md) | writing the decision log or the checkpoint, or analysing either — both schemas |
+| Read this | When | Per run |
+|---|---|---|
+| [references/autonomy.md](./references/autonomy.md) | before Phase 1 — level × tier table, hard-stop detection, brake semantics | **always** |
+| [PHASE-FORMAT.md](./PHASE-FORMAT.md) | entering Phase 1 — what phases 1–4 put on screen | **always** |
+| [references/sources.md](./references/sources.md) | resolving tasks — adapter contract, local-markdown and GitHub implementations | **always** |
+| [DESIGN-LOOP.md](./DESIGN-LOOP.md) | entering Step 1 — reviewer protocol, **and the skip table the skip decision reads** | **always** |
+| [BUILD-LOOP.md](./BUILD-LOOP.md) | entering Step 2, **or the wizard's question 2** — verify/review tooling, the fingerprint table, cleanup scope, TDD hand-off | **always** |
+| [references/telemetry.md](./references/telemetry.md) | writing a decision record or the checkpoint — both schemas, and the thresholds Phase 4's one line reads | **always** |
+| [references/execution.md](./references/execution.md) | any group holds two or more tasks — executor contract and fallback ladder | conditional |
+| [references/setup.md](./references/setup.md) | first run, or `setup` argument — wizard, config schema, capability probe | conditional |
+| [references/report.md](./references/report.md) | the `report` argument — the scorecard, and what the log cannot tell you | conditional |
 
-Read each at most once per session. Do not read `execution.md` on a sequential run; do not read `setup.md` when config already exists.
+Read each at most once per session. **Six of these are entered on every run; only the last three are genuinely deferred** — do not read `execution.md` on a sequential run, `setup.md` when config already exists, or `report.md` on a run that is not `report`. The column is there because the alternative misstates what this skill costs to start: a map that reads as nine deferred loads, six of which always happen, is not a read-on-demand map.
 
 ## Runtime layout
 
@@ -61,7 +62,7 @@ Print the effective configuration, each value tagged with its origin, **before P
 ## Arguments
 
 - `setup` — run the wizard and exit. When it runs **automatically** because no config exists, the invocation continues into the run instead of exiting.
-- `report` — print the decision-log scorecard and exit. Reads the log, changes nothing, never touches the dial.
+- `report` — print the decision-log scorecard and exit (`references/report.md`, and that file is read on no other invocation). Reads the log, changes nothing, never touches the dial.
 - `--source=<ref>` — task source for this run (a file path, a GitHub issue number/URL, or an adapter-specific ref). Defaults to config.
 - `--todos=1,3` — process only these items. Skips ordering and grouping.
 - `--level=manual|assisted|auto` — override the dial for this run.

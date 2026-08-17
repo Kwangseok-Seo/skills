@@ -161,40 +161,9 @@ Both rates, never one. High agreement with poor outcomes means the human and the
 
 `manual_intervention` is the load-bearing field and the easiest to fudge. It is true whenever the user redirected, corrected, or took over after the decision — even slightly, even helpfully. **Only clean, uninterrupted successes are evidence.** Recording an assisted success as unassisted does not make the dial safer to raise; it makes the number that says so meaningless.
 
-## Using the log
+**The thresholds are as far as a task run reads.** Everything the log is *read for* — the scorecard, the diagnostic pass on a miscalibrated recommendation, and the three things it cannot answer — is `report.md`, which only the `report` argument loads. A run that drives tasks writes this file's two records and scores nothing.
 
-The log is read at exactly two moments, and both end with the user deciding.
-
-### 1 · `task-routine report` — the scorecard
-
-Reads the log, prints the table, changes nothing. This is the main use.
-
-```
-Dial evidence — 31 runs · 214 decisions · 198 with outcomes
-83 of the 214 were asked; the rest ran unattended and carry no agreement evidence.
-S2-test claims — 18 met · 3 unmet · 2 unclaimed · 1 not checked
-
-step         asked   agreed   clean   affects
-S2-test         22     0.95    0.91   manual → assisted    ✓ supported
-S1-design       14     0.86    1.00   manual → assisted    — n too low (need 20)
-P2-order        25     0.68    0.79   manual → assisted    ✗ against
-S2-review       22     1.00    0.95   assisted → auto      ✓ supported
-
-manual → assisted   1 supported · 1 short of data · 1 against
-assisted → auto     1 supported
-
-P2-order was overruled 8 times in 25. That is not an autonomy result — the ordering
-recommendation is miscalibrated for this repo. Read the rationale field on the
-overruled decisions before touching the dial.
-```
-
-The second header line is not decoration either: `asked` counts must be reconcilable with the total, or a reader cannot tell a 25-sample verdict from a 25-run one. Steps with no asked decisions do not appear at all — and their absence is not evidence.
-
-**Hard stops and `P0-verify` never appear as rows.** They are `mode: "asked"` with no recommendation, so `agreed` is `null` by construction and scoring them would compute a rate over an empty population. They belong in the header count and in a line of their own — *"14 hard stops asked: 9 × H4-security, 3 × H1-outward, 2 × H2-destructive"* — because a run that stopped fourteen times and a run that stopped once must not read alike.
-
-The `affects` column exists because the evidence is per step but the dial is global: a step that only runs unattended at `auto` says nothing about `manual → assisted`. Group the steps by the move they bear on, and answer the **move**, not the step.
-
-### 2 · One line in Phase 4, when something newly qualifies
+## One line in Phase 4, when something newly qualifies
 
 When a step passes both thresholds, say so once, as information:
 
@@ -203,20 +172,6 @@ S2-test now has 22 asked decisions at 0.95 agreed / 0.91 clean — `task-routine
 ```
 
 Not a pitch, not a prompt, and never an action. A skill that grades its own autonomy and then expands it has no gate at all.
-
-### 3 · Diagnosing the recommendation, which is the more useful read
-
-A low agreed rate is usually **not** a verdict about automation. It says the recommendation logic is wrong for this repo — the change-shape table doesn't match how this codebase is tested, or the ordering heuristic misreads its dependencies. That is actionable immediately, at any dial level, and fixing it helps the `manual` user as much as the `auto` one.
-
-Scope is per project by construction, since the log lives under `<project-slug>`. A step can earn autonomy in one repo and not another, which is exactly what the per-project config file is for.
-
-## What the log cannot tell you
-
-- **Nothing before n.** Under 20 asked decisions, report the count and stop; a 3-for-3 streak is not evidence.
-- **Nothing about decisions never offered.** Steps whose recommendation was suppressed never appear, so their absence is not a good record.
-- **Nothing about severity.** Every line weighs the same. One reverted commit and one preference disagreement are both a single unclean decision, and the rates cannot see the difference — read the outcomes, not just the ratio.
-
-A step that fails either threshold stays where it is. Report the numbers, not the verdict: the user raises the dial, this analysis only supplies the grounds.
 
 ## Never
 

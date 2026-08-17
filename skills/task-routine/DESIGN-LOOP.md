@@ -1,6 +1,6 @@
 # DESIGN-LOOP — Step 1's review protocol
 
-> Read once when entering Step 1 with the loop enabled. The **gates** — plan-not-reasoning, who decides, when to skip — live in `SKILL.md`. This file is the protocol and its output shapes.
+> Read once when entering Step 1 — **including when the loop is about to be skipped**, because §When to skip below is what settles that and `SKILL.md` sends the decision here. Gated on the loop already being enabled, this file would be needed to make a decision that decides whether to read it. The **gates** — plan-not-reasoning, who decides, when to skip — live in `SKILL.md`. This file is the protocol and its output shapes.
 
 ```
 1a gather → 1b design → 1c independent review → 1d apply → (back to 1c, max 3) → 1e freeze

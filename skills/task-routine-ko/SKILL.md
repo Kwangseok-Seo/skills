@@ -28,18 +28,19 @@ argument-hint: "[setup|report] [--source=<ref>] [--todos=1,3] [--level=manual|as
 
 ## 참조 적재 지도
 
-| 읽을 파일 | 시점 |
-|---|---|
-| [PHASE-FORMAT.md](./PHASE-FORMAT.md) | Phase 1 진입 시 — Phase 1–4 가 화면에 내는 것 |
-| [DESIGN-LOOP.md](./DESIGN-LOOP.md) | 루프를 켠 채 Step 1 진입 시 — 검토 프로토콜 |
-| [BUILD-LOOP.md](./BUILD-LOOP.md) | Step 2 진입 시, **또는 위저드 2번 질문** — 검증·리뷰 도구, 지문 표, 정리 범위, TDD 인계 |
-| [references/setup.md](./references/setup.md) | 첫 실행 또는 `setup` 인자 — 위저드, config 스키마, 능력 프로브 |
-| [references/sources.md](./references/sources.md) | 작업 해석 시 — 어댑터 계약, 로컬 마크다운·GitHub 구현 |
-| [references/autonomy.md](./references/autonomy.md) | 매 실행, Phase 1 이전 — 레벨 × 등급 표, hard stop 판정, 브레이크 의미론 |
-| [references/execution.md](./references/execution.md) | 한 그룹이라도 항목을 2개 이상 담을 때 — 실행자 계약과 폴백 사다리 |
-| [references/telemetry.md](./references/telemetry.md) | 결정 로그나 체크포인트를 쓸 때, 또는 둘 중 하나를 분석할 때 — 두 스키마 |
+| 읽을 파일 | 시점 | 매 실행 |
+|---|---|---|
+| [references/autonomy.md](./references/autonomy.md) | Phase 1 이전 — 레벨 × 등급 표, hard stop 판정, 브레이크 의미론 | **항상** |
+| [PHASE-FORMAT.md](./PHASE-FORMAT.md) | Phase 1 진입 시 — Phase 1–4 가 화면에 내는 것 | **항상** |
+| [references/sources.md](./references/sources.md) | 작업 해석 시 — 어댑터 계약, 로컬 마크다운·GitHub 구현 | **항상** |
+| [DESIGN-LOOP.md](./DESIGN-LOOP.md) | Step 1 진입 시 — 검토 프로토콜, **그리고 스킵 판단이 읽는 스킵 표** | **항상** |
+| [BUILD-LOOP.md](./BUILD-LOOP.md) | Step 2 진입 시, **또는 위저드 2번 질문** — 검증·리뷰 도구, 지문 표, 정리 범위, TDD 인계 | **항상** |
+| [references/telemetry.md](./references/telemetry.md) | 결정 레코드나 체크포인트를 쓸 때 — 두 스키마, 그리고 Phase 4 의 한 줄이 읽는 문턱값 | **항상** |
+| [references/execution.md](./references/execution.md) | 한 그룹이라도 항목을 2개 이상 담을 때 — 실행자 계약과 폴백 사다리 | 조건부 |
+| [references/setup.md](./references/setup.md) | 첫 실행 또는 `setup` 인자 — 위저드, config 스키마, 능력 프로브 | 조건부 |
+| [references/report.md](./references/report.md) | `report` 인자 — 성적표, 그리고 로그가 말해줄 수 없는 것 | 조건부 |
 
-각 파일은 세션당 최대 1회. 순차 실행이면 `execution.md` 를 읽지 않고, config 가 이미 있으면 `setup.md` 를 읽지 않는다.
+각 파일은 세션당 최대 1회. **이 중 여섯은 매 실행에서 진입하고, 진짜로 지연되는 것은 마지막 셋뿐이다** — 순차 실행이면 `execution.md` 를, config 가 이미 있으면 `setup.md` 를, `report` 가 아닌 실행이면 `report.md` 를 읽지 않는다. 이 컬럼이 있는 이유는 없을 때의 대안이 이 스킬의 시작 비용을 잘못 말하기 때문이다 — 아홉 개의 지연 적재로 읽히는데 그중 여섯이 매번 일어난다면 그건 참조 적재 지도가 아니다.
 
 ## 런타임 레이아웃
 
@@ -61,7 +62,7 @@ argument-hint: "[setup|report] [--source=<ref>] [--todos=1,3] [--level=manual|as
 ## 인자
 
 - `setup` — 위저드를 돌리고 종료. config 가 없어서 **자동으로** 발동한 경우엔 종료하지 않고 그 호출이 실행으로 이어진다.
-- `report` — 결정 로그 성적표를 출력하고 종료. 로그를 읽기만 하고 아무것도 바꾸지 않으며 다이얼을 건드리지 않는다.
+- `report` — 결정 로그 성적표를 출력하고 종료 (`references/report.md`, 그 파일은 다른 어떤 호출에서도 읽지 않는다). 로그를 읽기만 하고 아무것도 바꾸지 않으며 다이얼을 건드리지 않는다.
 - `--source=<ref>` — 이번 실행의 작업 소스(파일 경로, GitHub 이슈 번호/URL, 어댑터별 ref). 기본은 config.
 - `--todos=1,3` — 지정 항목만 처리. 정렬·그룹핑은 건너뛴다.
 - `--level=manual|assisted|auto` — 이번 실행의 다이얼 override.
