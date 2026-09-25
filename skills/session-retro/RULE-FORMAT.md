@@ -1,6 +1,6 @@
 # Global rule file format
 
-The shape of an always-on guardrail published to `~/.claude/rules/*.md`. (If your setup does not auto-load that directory, the same format applies wherever you keep always-loaded instructions — `~/.claude/CLAUDE.md`, for instance.)
+The shape of an always-on guardrail published to `~/.claude/rules/*.md`. **One rule = one file** — the ledger tracks state (loaded · isolated · archived) by file location and revision by file content, so never merge several rules into one file.
 
 **The core constraint: these files are loaded into context every single session.** Length is a standing cost, and a wrong rule is standing contamination. So they must be short, strong, and falsifiable.
 
@@ -99,7 +99,7 @@ Rather than inventing a new layout, reach for one of these:
 ## After publishing
 
 - If you keep a retrospective corpus, close the corresponding 🟢 node with `✅ published (rule:<filename>, date)` and back-link it.
-- Leave one line in project memory recording the publication — raw material for the next retro's scorecard.
+- Leave one line in project memory recording the publication — the history the next retro checks for past decisions. Reuse itself is counted by the ledger.
 
 ## Anti-patterns
 

@@ -57,7 +57,7 @@ Copy-Item -Recurse skills/skills/task-routine-ko  ~/.claude/skills/task-routine-
 | `dream-ko`         | ko   | `dream` 의 한국어 변형                                                              |
 | `session-seal`     | en   | 현재 세션을 `<cwd>/.claude/sessions/<제목>.md` 로 Why/How frontmatter 와 함께 봉인  |
 | `session-seal-ko`  | ko   | `session-seal` 의 한국어 변형                                                       |
-| `session-retro`    | en   | GATE 기반 세션 회고 — rule 재사용 성적을 먼저 매기고 accept 된 것만 발행           |
+| `session-retro`    | en   | GATE 기반 세션 회고 — 원장 근거로 rule 을 덜어내고, accept 된 것만 발행            |
 | `session-retro-ko` | ko   | `session-retro` 의 한국어 변형                                                      |
 | `to-html`          | en   | 가치 판정 후 HTML 시각화 변환 (Compare / Tune / Learn 패턴, 토큰 비용 경고 포함)   |
 | `to-html-ko`       | ko   | `to-html` 의 한국어 변형                                                            |
@@ -97,17 +97,15 @@ Why / How 는 미래 세션이 즉시 이어받게 해주는 두 줄 abstraction
 
 ### `session-retro` 가 무엇을 하는가
 
-`session-retro` 는 세션을 닫기 전에 도는 **수동** 패스다. 세션 봉인도 함께 쓴다면 `/session-seal` **전**에 돈다. 실행하면 에이전트가:
+`session-retro` 는 세션을 닫기 전에 도는 **수동** 패스다. 세션 봉인도 함께 쓴다면 `/session-seal` **전**에 돈다. rule 은 매 세션 컨텍스트를 먹으므로, 무엇을 *덜어낼지*를 더할 것만큼 신중하게 정한다. 실행하면 에이전트가:
 
-1. **재사용 성적을 먼저 매긴다** — 이번 세션에 적용됐을 rule 각각에 대해 *어디서 어떻게* 쓰였는지를 구체 사건으로 적고 작동/부분작동/미작동을 판정한다. 이 섹션이 첫 번째인 것은 의도적이다 — "또 rule 하나 늘리기"에 제동이 걸린다. 발행한 게 없는 첫 실행이면 한 줄로 그렇게 적고 넘어간다.
-2. **4축 × 2렌즈로 분석한다** — 잘한 것 / 실수한 것 / 어려웠던 것 / 배운 것을 엔지니어링·비즈니스 두 렌즈로. 모든 항목은 세션의 관찰 가능한 사건에 앵커해야 하고, **실수 축은 비울 수 없다.**
-3. **이진으로 판정한다** — 각 노드는 🟢 후보(rule / skill / guardrail) 아니면 **사유가 적힌** `미분류`. 강도 등급을 두지 않는다 — 낮게 매긴 항목이 "검토 완료" 착각과 함께 영구 매장되기 때문.
-4. **사람 GATE 에서 멈춘다** — 후보는 선택지 버튼이 아니라 **산문으로** 제시된다. 읽기가 강제돼야 거수기가 안 된다. 반려·문구 수정도 명시적으로 정당한 결과이고, 과거에 거절한 영역이면 그 사실을 후보 옆에 밝힌다.
-5. **accept 된 것만 발행한다** — rule 은 동봉된 `RULE-FORMAT.md` 를 따라 `~/.claude/rules/*.md` 로. 이 포맷은 *매 세션 컨텍스트에 실리는* 파일에 맞춰져 있다(목표 1.5~3K chars).
+1. **rule 마다 판정을 기록한다** — 이번 세션에 관련된 rule 과 격리 중인 rule 전부를 작동 / 부분작동 / 미작동(격리 rule 은 무관 포함)으로, 구체 사건과 함께. 동봉된 `ledger.py` 가 CSV 원장에 덧붙인다.
+2. **4축 × 2렌즈로 분석하고 이진으로 판정한다** — 잘한 것 / 실수한 것 / 어려웠던 것 / 배운 것, 모두 관찰 가능한 사건에 앵커(**실수 축은 비울 수 없다**). 각 노드는 🟢 후보 아니면 사유가 적힌 `미분류`. 여기까지는 읽지 않아도 되는 작업 텍스트다.
+3. **표 두 개를 보인다, 빼기가 먼저** — 빼기 행은 에이전트의 짐작이 아니라 `ledger.py cards` 에서 나온다: 계속 작동하는 rule 은 *격리*(컨텍스트에서 빼고 rule 없이 행동이 유지되는지 관측), 계속 실패하는 rule 은 *고치거나빼기*, 격리 중 실패한 rule 은 *복귀*, 격리를 버틴 rule 은 *보관*, 회고가 거의 건드리지 않는 rule 은 *관련드묾*. 격리·고치거나빼기 행에는 원장에서 평균 rule 대비로 센 확률이 붙는다. 그다음이 더하기 — 신규 rule 과 보강.
+4. **사람 GATE 에서 멈춘다** — 번호별로 답한다. 반려·문구 수정도 명시적으로 정당한 결과이고, 반려는 기록돼 같은 제안이 매 회고 다시 올라오지 않는다.
+5. **accept 된 것만 실행한다** — rule 파일을 `~/.claude/rules/` · `rules-probation/` · `rules-archive/` 사이에서 옮기고(위치가 곧 상태), rule 은 동봉된 `RULE-FORMAT.md` 를 따라 발행한다(목표 1.5~3K chars).
 
-동봉 파일: `RETRO-FORMAT.md`(출력 형태), `RULE-FORMAT.md`(rule 파일 형태), `examples/worked-example.md`(비식별화한 실제 회고 1패스 전문).
-
-`~/.claude/rules/` 를 자동으로 읽지 않는 환경이면 `~/.claude/CLAUDE.md` 등 상시 적재되는 자리에 발행한다 — 목적지만 바뀐다. 세션을 가로지르는 회고 코퍼스에 노드를 남기는 6단계는 선택이며 기본은 건너뛴다.
+동봉 파일: `RETRO-FORMAT.md`(출력 형태), `RULE-FORMAT.md`(rule 파일 형태), `ledger.py` 와 테스트(Python 3.8+), `examples/worked-example.md`(실제 회고 1패스 전문). `~/.claude/rules/` 아래 rule 하나 = 파일 하나를 전제로 한다. 원장이 비어 있는 동안은 기준이 없어 확률 제안이 나오지 않고, 판정이 쌓이면서 생긴다. 원장은 영어판이 `~/.claude/session-retro/`, 한국어판이 `~/.claude/session-retro-ko/` 로 따로다 — 판정값이 각 언어로 저장되기 때문이다. 선택: `SESSION_RETRO_DIR` 는 원장 위치, `SESSION_SEAL_DIR` 는 봉인 세션 수, `SESSION_RETRO_CORPUS` 는 세션을 가로지르는 회고 코퍼스(8단계, 기본은 건너뜀).
 
 ### `to-html` 이 무엇을 하는가
 

@@ -57,7 +57,7 @@ Copy-Item -Recurse skills/skills/task-routine-ko  ~/.claude/skills/task-routine-
 | `dream-ko`         | ko   | Korean variant of `dream`                                                         |
 | `session-seal`     | en   | Seal the current session as `<cwd>/.claude/sessions/<title>.md` with Why/How      |
 | `session-seal-ko`  | ko   | Korean variant of `session-seal`                                                  |
-| `session-retro`    | en   | Gated session retrospective — scores rule reuse, then publishes accepted lessons  |
+| `session-retro`    | en   | Gated session retrospective — prunes rules on ledger evidence, publishes lessons  |
 | `session-retro-ko` | ko   | Korean variant of `session-retro`                                                 |
 | `to-html`          | en   | Gated HTML visualization (Compare / Tune / Learn patterns) with token-cost warning |
 | `to-html-ko`       | ko   | Korean variant of `to-html`                                                        |
@@ -97,17 +97,15 @@ To put snapshots elsewhere (e.g. a personal wiki), set `SESSION_SEAL_DIR` in you
 
 ### `session-retro` — what it does
 
-`session-retro` is a **manual** pass you run before closing a session — and, if you also seal sessions, before `/session-seal`. When you run it, the agent:
+`session-retro` is a **manual** pass you run before closing a session — and, if you also seal sessions, before `/session-seal`. Rules cost context every session, so it decides what to *remove* as carefully as what to add. When you run it, the agent:
 
-1. **Scores reuse first** — for each previously published rule that should have applied, it reports *where and how* it was actually used, with a verdict of worked / partly worked / did not work. This section comes first on purpose: it brakes the urge to just add another rule. On a first run with nothing published, it says so in one line and moves on.
-2. **Analyses 4 axes × 2 lenses** — went well / went wrong / was hard / was learned, each through an engineering and a business lens. Every item must anchor to an observable event in the session, and the mistakes axis is never allowed to be empty.
-3. **Judges, binary** — each node is either a 🟢 candidate (rule / skill / guardrail) or `unclassified` **with a stated reason**. No intensity grades, because a low grade buries an item while pretending it was reviewed.
-4. **Stops at a human GATE** — candidates are presented as prose, never as clickable options, so reading is forced. Rejecting or rewording is an explicitly valid outcome, and any area you rejected before is flagged next to the candidate.
-5. **Publishes only what you accepted** — rules land in `~/.claude/rules/*.md` following the bundled `RULE-FORMAT.md`, which is tuned for files that get loaded into context every session (target 1.5–3K characters).
+1. **Records a verdict per rule** — worked / partly-worked / did-not-work, each with the concrete event, for the rules that bore on the session, plus every isolated rule. The bundled `ledger.py` appends them to a CSV ledger at `~/.claude/session-retro/`.
+2. **Analyses 4 axes × 2 lenses** and **judges binary** — went well / went wrong / was hard / was learned, each anchored to an observable event (the mistakes axis is never empty); each node is either a 🟢 candidate or `unclassified` with a stated reason. This is working text you need not read.
+3. **Shows you two tables, Remove first** — Remove rows come from `ledger.py cards`, never from the agent's own estimates: *isolate* a rule that keeps working (move it out of context and see if the behaviour holds without it), *fix-or-drop* one that keeps failing, *restore* an isolated rule that failed, *archive* one that held up, *rarely-relevant* for one retros never touch. Isolate and fix-or-drop rows carry a probability counted from the ledger against the average rule. Then Add: new rules and reinforcements.
+4. **Stops at a human GATE** — you answer by row number; rejecting or rewording is an explicitly valid outcome, and rejections are recorded so the same proposal does not come back every retro.
+5. **Executes only what you accepted** — moves rule files between `~/.claude/rules/`, `rules-probation/` and `rules-archive/` (location is state), and publishes rules following the bundled `RULE-FORMAT.md` (target 1.5–3K characters).
 
-The skill bundles `RETRO-FORMAT.md` (output shape), `RULE-FORMAT.md` (rule file shape), and `examples/worked-example.md` (a full de-identified retro, end to end).
-
-If your setup doesn't auto-load `~/.claude/rules/`, publish to `~/.claude/CLAUDE.md` or any always-loaded location instead — only the destination changes. Step 6, writing nodes into a cross-session retrospective corpus, is optional and skipped by default.
+The skill bundles `RETRO-FORMAT.md` (output shape), `RULE-FORMAT.md` (rule file shape), `ledger.py` with its tests (Python 3.8+), and `examples/worked-example.md` (a real retro, end to end). It assumes one rule per file under `~/.claude/rules/`. With an empty ledger there is no baseline yet, so no probability proposals appear until verdicts accumulate. The Korean variant keeps its own ledger at `~/.claude/session-retro-ko/`, since verdicts are stored in each variant's language. Optional: `SESSION_RETRO_DIR` moves the ledger, `SESSION_SEAL_DIR` adds sealed-session counts, `SESSION_RETRO_CORPUS` points at a cross-session retrospective corpus (step 8, skipped by default).
 
 ### `to-html` — what it does
 

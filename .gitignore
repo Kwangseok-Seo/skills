@@ -8,3 +8,7 @@ node_modules/
 
 # Review working notes — findings are applied to the skills, not published here
 REVIEW-FINDINGS.md
+
+# Python test byproducts (session-retro ships a ledger script with tests)
+__pycache__/
+.pytest_cache/
