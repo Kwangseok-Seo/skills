@@ -31,6 +31,8 @@ Thanks for the interest. This repo is small and opinionated — most contributio
 
 Same checklist applies. **Update both language variants in the same PR** — drift between `<name>` and `<name>-ko` is the most common source of bugs here.
 
+For `session-retro`, `python -m pytest tests/` from the repo root checks that the two variants' `ledger.py` and `tests/test_ledger.py` still differ only in text.
+
 ## Issues
 
 Bug reports and feature requests welcome. For "this skill doesn't trigger when I say X", include the exact prompt you used so the trigger keywords can be tuned.
