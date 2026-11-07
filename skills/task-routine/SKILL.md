@@ -34,7 +34,7 @@ The gates below are the contract: entry conditions, caps, and hard stops. Everyt
 | [PHASE-FORMAT.md](./PHASE-FORMAT.md) | entering Phase 1 — what phases 1–4 put on screen | **always** |
 | [references/sources.md](./references/sources.md) | resolving tasks — adapter contract, local-markdown and GitHub implementations | **always** |
 | [DESIGN-LOOP.md](./DESIGN-LOOP.md) | entering Step 1 — reviewer protocol, **and the skip table the skip decision reads** | **always** |
-| [BUILD-LOOP.md](./BUILD-LOOP.md) | entering Step 2, **or the wizard's question 2** — verify/review tooling, the fingerprint table, cleanup scope, TDD hand-off | **always** |
+| [BUILD-LOOP.md](./BUILD-LOOP.md) | entering Step 2, **or the wizard's question 2, or Phase 3 when a group sends a task to a worker** (its change-shape table) — verify/review tooling, the fingerprint table, cleanup scope, TDD hand-off | **always** |
 | [references/telemetry.md](./references/telemetry.md) | writing a decision record or the checkpoint — both schemas, and the thresholds Phase 4's one line reads | **always** |
 | [references/execution.md](./references/execution.md) | any group holds two or more tasks — executor contract and fallback ladder | conditional |
 | [references/setup.md](./references/setup.md) | first run, or `setup` argument — wizard, config schema, capability probe | conditional |

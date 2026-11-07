@@ -34,7 +34,7 @@ argument-hint: "[setup|report] [--source=<ref>] [--todos=1,3] [--level=manual|as
 | [PHASE-FORMAT.md](./PHASE-FORMAT.md) | Phase 1 진입 시 — Phase 1–4 가 화면에 내는 것 | **항상** |
 | [references/sources.md](./references/sources.md) | 작업 해석 시 — 어댑터 계약, 로컬 마크다운·GitHub 구현 | **항상** |
 | [DESIGN-LOOP.md](./DESIGN-LOOP.md) | Step 1 진입 시 — 검토 프로토콜, **그리고 스킵 판단이 읽는 스킵 표** | **항상** |
-| [BUILD-LOOP.md](./BUILD-LOOP.md) | Step 2 진입 시, **또는 위저드 2번 질문** — 검증·리뷰 도구, 지문 표, 정리 범위, TDD 인계 | **항상** |
+| [BUILD-LOOP.md](./BUILD-LOOP.md) | Step 2 진입 시, **또는 위저드 2번 질문, 또는 그룹이 항목을 worker 에 보내는 Phase 3** (변경 형태 표) — 검증·리뷰 도구, 지문 표, 정리 범위, TDD 인계 | **항상** |
 | [references/telemetry.md](./references/telemetry.md) | 결정 레코드나 체크포인트를 쓸 때 — 두 스키마, 그리고 Phase 4 의 한 줄이 읽는 문턱값 | **항상** |
 | [references/execution.md](./references/execution.md) | 한 그룹이라도 항목을 2개 이상 담을 때 — 실행자 계약과 폴백 사다리 | 조건부 |
 | [references/setup.md](./references/setup.md) | 첫 실행 또는 `setup` 인자 — 위저드, config 스키마, 능력 프로브 | 조건부 |

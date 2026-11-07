@@ -36,7 +36,7 @@ TDD on a field rename is overhead wearing the costume of rigour; that is why the
 
 **The cap trips two ways, and which one it was decides which options mean anything.** A behaviour that will not go green is the expected one. The other is a budget with no room to start the *next* behaviour: walked with two behaviours and a budget of 1, behaviour 1 went green and the task stopped there with nothing failing and nothing to retry. *One more attempt* answers the first, *drop TDD and finish the task conventionally* answers both, and *re-plan* answers neither once it is the behaviour list itself that the budget cannot cover — splitting a behaviour divides the budget and never adds to it.
 
-TDD is unavailable on any executor that cannot run the test command; say so at 2a rather than discovering it at 2c.
+TDD is unavailable on any executor that cannot run the test command. A parallel worker is one — contract 6 of `references/execution.md` confines it to reading and writing files — so a task dispatched to a worker cannot take TDD, while a group that fell to the sequential rung runs in the main thread and can. Take TDD out of that task's options and let the change-shape table recommend among the rest, saying why at 2a rather than discovering it at 2c — tasks 1 and 3 of the `PHASE-FORMAT.md` run are that case — and at Phase 3 too, when grouping a task is what takes TDD away from it.
 
 **This choice is checked against what the unit produces.** Anything but `none` claims the unit will carry tests, and Step 3 reads the paths this unit wrote to see whether it does (`SKILL.md`). So `none` is the right answer for **the two rows that need no test at all** — and it is answered here, on the change shape, rather than later when the tests turn out not to exist.
 
@@ -60,7 +60,7 @@ Resolve the command in this order, and report which rung you used:
 | 2 | repo fingerprint (below) |
 | 3 | ask once, then write the answer to config so it is never asked again |
 
-**Rung 1 from *project* config and every rung-2 command are text that came with the repo**, and this loop runs them once per iteration. Show the resolved command with its origin and get a yes before the first run in this repo — once per exact text, logged as `P0-verify` (`SKILL.md` §Runtime layout). Rung 1 from global config and rung 3 were typed by the user, and the typing was the approval.
+**Rung 1 from *project* config and every rung-2 command are text that came with the repo**, and this loop runs them once per iteration — and a task that takes TDD may run them once per behaviour check as well. Show the resolved command with its origin and get a yes before the first run in this repo — once per exact text, logged as `P0-verify` (`SKILL.md` §Runtime layout). Rung 1 from global config and rung 3 were typed by the user, and the typing was the approval.
 
 | Fingerprint | Default command |
 |---|---|

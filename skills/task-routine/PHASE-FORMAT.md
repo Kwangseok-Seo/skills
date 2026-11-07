@@ -41,7 +41,7 @@ A repo that keeps no tests as separate paths — Rust `#[cfg(test)]`, in-source 
 ⛔ Verify command supplied by the repo, not by you
 
    node scripts/verify.js          (.claude/task-routine.json)
-   It runs once per build iteration, up to 3 per unit.
+   It runs once per build iteration, up to 3 per unit; a task that takes TDD may also run it once per behaviour check.
 
    Approve for this repo / type a different command / stop
 ```
@@ -96,6 +96,8 @@ Keeping the source order is a legitimate outcome and gets the same shape with `R
 
 **Name the rung you landed on and why the higher ones were unavailable.** A run that silently degrades from parallel to sequential looks identical to a run that was never parallel.
 
+**Say which grouped tasks lose TDD.** A worker cannot run tests (contract 6 of `references/execution.md`), so a task it carries cannot take TDD. For each such task whose change shape offers or recommends TDD — the table in `BUILD-LOOP.md` §2a, read now if it has not been — add a line under the groups: grouping is what takes the option away, and Step 2 is too late to say so.
+
 ```
 Groups
 
@@ -105,6 +107,7 @@ Groups
   G3  (after G2)     4  Report cache hit rate   src/cache/metrics.ts
 
   ⚠️ 1 and 2 both touch src/api/list.ts — different regions, so ordered rather than parallel
+  ⚠️ 1 and 3 go to workers, which cannot run tests — TDD leaves their options (BUILD-LOOP §2a)
 
 Executor  native subagents + git worktree
           no execution.executor in config → rung 2 of 3
@@ -167,7 +170,7 @@ Decisions made on your behalf (level auto)
 |------|-----------|--------------|----------------------------------|----------------|
 | 1    | S1-design | skip loop    | 1 file, no new interface         | clean          |
 | 1    | S2-test   | unit+int     | endpoint touching storage        | 1 re-verify (G1) |
-| 3    | S2-test   | unit+int     | new permission surface           | 1 re-verify (G1) |
+| 3    | S2-test   | unit+int     | permission rule; TDD not open to a worker | 1 re-verify (G1) |
 | 3    | S1-design | 2 rounds     | new auth surface                 | 1 blocking fix |
 | 2    | S2-test   | unit+int     | cache layer is an integration    | 3 re-verify ⚠️ |
 | 2    | S2-review | local diff   | no PR; gh present, branch unpushed | 1 finding     |
