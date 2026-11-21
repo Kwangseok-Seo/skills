@@ -6,7 +6,7 @@
 
 A row is one line, or a few adjacent lines that read as one sentence (a signature split over lines, an `if`/`else` pair returning mirrored values). Rows follow the **after** version's line order; a removed line sits where it used to be. Every line of the function is covered by some row — including unchanged ones, because an unchanged line is where a meaning change hides.
 
-- **Grouping.** Every line that is not `same`, and every ★ candidate, gets its own row. A run of consecutive `same` lines with no ★ candidate may collapse into one row (`A9 same, 17 lines — builds the order request`).
+- **Grouping.** Every line that is not `same`, and every ★ candidate, gets its own row. A run of consecutive `same` lines with no ★ candidate may collapse into one row (`A9 same, 17 lines — builds the order request`) — in a peripheral function only; a core function shows every line (below).
 - **Plain reads go with their consumer.** A line that only reads or assigns a value (`point = float(p['point'])`) takes the tag of the row that uses the value, not a tag of its own, unless the value itself changed.
 
 Each row carries:
@@ -17,6 +17,7 @@ Each row carries:
 | before code / after code | the exact text, or *(none)* when absent on that side |
 | before sentence / after sentence | what the line does **in this function at this point** — not a paraphrase of the syntax. Include when it is reached and where its inputs come from when those changed |
 | tag | one of the six below, plus ⚠ when it applies |
+| cause | ★ rows only: the id(s) of the `new` / `changed` / `removed` row(s) that changed this row's meaning, in this function or another (`A4`, `C4`) |
 | context | optional: a fact from outside the function that the row's meaning depends on (section 4) |
 | tests | test ids (`T1`, `T4`) from the test matrix, or the one-line reason no test could run |
 
@@ -34,6 +35,14 @@ Two questions per row: *did the text change?* and *did the meaning change?* Mean
 - **Text includes indentation where indentation is syntax** (Python, YAML, Haskell, Makefiles). A line that only moved into or out of a block changed its text — it is `changed` or ★, never `same`.
 - `★` is the reason this format exists. A line whose text did not change never appears in an ordinary diff, yet a new guard above it, a new caller, or a changed producer of its input can change when it runs or what it sees. A line is ★ when **some input now produces a different observable effect through it** — a different return value, a call made or skipped, a different value passed on. Look for it on every unchanged line that sits after a new or changed branch, that reads a value whose producer changed, and on **unchanged call sites of a changed function**.
 - `⚠ ask` is not a seventh cell. It is added to any row whose correctness depends on something the diff does not settle — a swallowed error that collides with a valid value, a magic number without a stated reason, an ordering that a caller's query decides, two values from separate queries that are assumed to agree. A ⚠ row always produces a question in section 6.
+
+## Core and peripheral functions
+
+A function in scope is **core** when it is wholly new, or when one of its rows is the `cause` of some ★ row — in itself or in another function. Every other function is **peripheral**. A changed condition, threshold, return value or call position moves the meaning of unchanged lines, so it leaves a ★ behind; a changed log argument, message or comment does not.
+
+- **Core functions are shown whole**: every line, no folded `same` runs. This is where a policy or the core logic changed, and the reader needs the whole method to judge it.
+- **Peripheral functions fold** runs of `same` lines as in *Grouping*.
+- The split is read off the `cause` fields after the rows are built — not a separate judgment of importance. A function whose only new branch validates a new input (and moves no existing line) is peripheral, however policy-like it reads.
 
 ## Evidence — what a tag needs before it is stated as fact
 

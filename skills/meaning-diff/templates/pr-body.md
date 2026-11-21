@@ -2,20 +2,52 @@
   meaning-diff PR body template. Replace every {{PLACEHOLDER}}, repeat rows, delete these comments.
   GitHub renders tables, ```mermaid fences and <details>. Keep the whole body under 65,536 characters.
   Inside table cells write a literal pipe as \| (also inside `code`), and keep each cell on one line.
+
+  "What changed in meaning" is one ```diff block per function in scope. GitHub colors a diff fence by
+  the first character of each line, so the block shows the meaning change without the Files tab:
+    `+` green   after-only line (new, or the after side of changed / text only)
+    `-` red     before-only line (removed, or the before side of changed / text only)
+    `!` orange  ★ row: same text, new meaning. Put it on every line of the row.
+    ` ` plain   same
+    `#` grey    annotation, not code. Always at column 0, never after `+`/`-` (that colors it as code).
+  - Lines follow the after version's order; a removed line sits where it used to be.
+  - A row's annotation goes on the line(s) right below the row's last code line:
+      #  A4 new — <after sentence>  [T1 T3 strong]
+      #  A5 ★ before: <before sentence>
+      #       after:  <after sentence>  cause: A4  [T1 strong · T10 pin]
+    `changed` takes the before/after pair too. ⚠ and (inferred) go after the tag. Do not pad with
+    spaces to align the test ids; CJK width breaks the alignment.
+  - Core functions (FORMAT.md) show every line. In a peripheral function, a run of `same` lines with no
+    ★ candidate collapses into one annotation line:
+      #  A1 same (23 lines) — <what the run does>
+    A long body inside one row of a peripheral function may be shortened to `...  <what it does> (N lines)` with that row's prefix.
+  - If the code itself contains ```, open the block with ```` instead.
 -->
 ## Summary
 
 {{TWO_OR_THREE_SENTENCES: what the change does, and the one meaning change a reviewer must not miss}}
 
-Scope (`git diff -W {{BASE}}..{{HEAD}}`): {{FUNCTIONS_IN_SCOPE}}
+Scope (`git diff -W {{BASE}}..{{HEAD}}`): {{FUNCTIONS_IN_SCOPE, core ones in bold}}
 
 ## What changed in meaning
 
-Rows that are not `same`. Tags: `new` · `removed` · `text only` · `changed` · `★ same text, new meaning` · `⚠` = answered below.
+`+` added · `-` removed · `!` **same text, new meaning (★)** · plain = same · `#` = annotation, not code · `[T…]` = tests and evidence strength · `⚠` = answered below
 
-| Row | Tag | Before | After | Tests |
-|---|---|---|---|---|
-| {{ROW_ID}} | {{TAG}} | {{BEFORE_SENTENCE}} | {{AFTER_SENTENCE}} | {{T_IDS}} |
+<!-- one block per function in scope -->
+**{{LETTER}}** `{{FUNCTION}}` — {{core — whole method | peripheral — same runs folded}}
+
+```diff
+ {{UNCHANGED_LINE}}
+#  {{ROW_ID}} same ({{N}} lines) — {{WHAT_THE_RUN_DOES}}
++{{ADDED_LINE}}
+#  {{ROW_ID}} new — {{AFTER_SENTENCE}}  [{{T_IDS}} {{STRENGTH}}]
+!{{STAR_LINE}}
+#  {{ROW_ID}} ★ before: {{BEFORE_SENTENCE}}
+#       after:  {{AFTER_SENTENCE}}  cause: {{CAUSE_ROW_IDS}}  [{{T_IDS}} {{STRENGTH}}]
+-{{BEFORE_LINE}}
++{{AFTER_LINE}}
+#  {{ROW_ID}} changed — before: {{BEFORE_SENTENCE}} · after: {{AFTER_SENTENCE}}  [{{T_IDS}} {{STRENGTH}}]
+```
 
 {{IF_ANY_★: one line per ★ row saying why the ordinary diff hides it}}
 
@@ -52,14 +84,6 @@ Same tests on the parent (`{{BASE}}`), this branch (`{{HEAD}}`), and one mutant 
 ## Known limits
 
 - {{LIMIT}}
-
-<details><summary>All rows</summary>
-
-| Row | Tag | Before code | After code | Before | After |
-|---|---|---|---|---|---|
-| {{ROW_ID}} | {{TAG}} | `{{BEFORE_CODE}}` | `{{AFTER_CODE}}` | {{BEFORE_SENTENCE}} | {{AFTER_SENTENCE}} |
-
-</details>
 
 <details><summary>Test code</summary>
 

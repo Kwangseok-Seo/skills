@@ -43,7 +43,7 @@ If more than **5** functions changed, list them all with a one-line summary and 
 
 ### 2. Line meaning diff
 
-For each function in scope, read the **whole** before and after versions (`git show <base>:<path>`, `git show <head>:<path>`), not only the hunk, and build rows per FORMAT.md. Every line of the function is covered by a row; only runs of plain `same` lines may be grouped. The ★ search is the core work: for every unchanged line, ask whether it now runs under different conditions or sees different inputs.
+For each function in scope, read the **whole** before and after versions (`git show <base>:<path>`, `git show <head>:<path>`), not only the hunk, and build rows per FORMAT.md. Every line of the function is covered by a row; only runs of plain `same` lines may be grouped. The ★ search is the core work: for every unchanged line, ask whether it now runs under different conditions or sees different inputs, and record the row that caused it (`cause`). Then mark each function **core** or **peripheral** from those causes (FORMAT.md); section 1 and each function's heading show the mark, core functions are shown whole, peripheral ones fold their `same` runs.
 
 ### 3. Path diagram
 
@@ -92,9 +92,9 @@ Close with a short terminal summary: the ★ rows with their evidence strength, 
 
 One Markdown file from [templates/pr-body.md](templates/pr-body.md), written to `<repo>/.claude/meaning-diff/<branch>-pr.md` (with `/` in the branch name replaced by `-`) and printed. The reader is a reviewer skimming a PR page, so:
 
-- The summary table lists only rows that are **not** `same`. The full row table goes in a `<details>`.
+- Section 2 is one ```` ```diff ```` block per function, not a table: `+`/`-` for changed text, `!` for ★ lines (GitHub colors them orange — the lines an ordinary diff leaves plain), and `#` annotation lines under each row with its tag, before/after sentences and tests. Core functions show every line; in peripheral functions runs of `same` lines collapse into one annotation line. Either way the blocks cover every row and there is no separate full row table. The line rules are in the template's header comment.
 - Section 6 becomes **Answered before you ask** (the ⚠ questions with the author's answer — ask the user for each answer; leave `TODO(author)` only if they decline) and **Known limits**.
-- GitHub renders ```` ```mermaid ```` blocks, tables, and `<details>`; nothing else from the HTML page carries over. The PR body limit is 65,536 characters — if over, move the full row table and test code out and say so.
+- GitHub renders ```` ```diff ```` and ```` ```mermaid ```` blocks, tables, and `<details>`; nothing else from the HTML page carries over. The PR body limit is 65,536 characters — if over, move the test code out first, then shorten long rows of peripheral functions to `...  (N lines)`, and say so. Core functions stay whole.
 
 Then offer, separately and only on an explicit yes:
 

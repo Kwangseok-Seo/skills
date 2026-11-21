@@ -39,22 +39,27 @@ code { font-family: var(--font-code); font-size: .85rem; background: var(--code-
 .t-new { background: var(--add-bg); color: var(--add-fg); } .t-removed { background: var(--del-bg); color: var(--del-fg); }
 .t-text, .t-same { background: var(--same-bg); color: var(--same-fg); } .t-changed { background: var(--add-bg); color: var(--add-fg); }
 .t-star { background: var(--star-bg); color: var(--star-fg); } .t-warn { background: var(--warn-bg); color: var(--warn-fg); }
-.rows { display: flex; flex-direction: column; gap: 10px; }
-.row { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.row.star { border-color: var(--star-fg); }
-.row-h { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
-.row-h .rid { font-family: var(--font-code); font-weight: 500; font-size: .85rem; }
-.row-h .tests { margin-left: auto; font-size: .78rem; color: var(--muted); font-family: var(--font-code); }
-.cols { display: grid; grid-template-columns: 1fr 1fr; }
-.col { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.col + .col { border-left: 1px solid var(--line); }
-.col .lab { font-size: .72rem; letter-spacing: .06em; color: var(--muted); font-family: var(--font-code); }
-.col pre { margin: 0; font: .82rem var(--font-code); white-space: pre-wrap; word-break: break-word; padding: 6px 8px; border-radius: 4px; background: var(--code-bg); }
-.col pre.del { background: var(--del-bg); color: var(--del-fg); } .col pre.add { background: var(--add-bg); color: var(--add-fg); }
-.col pre.none { background: transparent; color: var(--muted); font-style: italic; padding-left: 0; }
-.col .say b { color: var(--star-fg); }
-.ctx { padding: 8px 14px; border-top: 1px dashed var(--line); font-size: .85rem; color: var(--muted); }
-.ctx b { color: var(--fg); font-weight: 500; }
+.dblk { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; padding: 6px 0; font: .8rem/1.55 var(--font-code); }
+.ln { display: flex; min-width: max-content; }
+.ln .g { flex: 0 0 2.2em; text-align: center; color: var(--muted); user-select: none; }
+.ln code { background: none; padding: 0 12px 0 0; border-radius: 0; font-size: inherit; white-space: pre; }
+.ln.add { background: var(--add-bg); } .ln.add .g, .ln.add code { color: var(--add-fg); }
+.ln.del { background: var(--del-bg); } .ln.del .g, .ln.del code { color: var(--del-fg); }
+.ln.star { background: var(--star-bg); box-shadow: inset 3px 0 0 var(--star-fg); } .ln.star .g { color: var(--star-fg); font-weight: 700; }
+.ln.fold code { color: var(--muted); font-style: italic; }
+.ann { position: sticky; left: 0; margin: 4px 10px 8px 2.2em; max-width: 920px; padding: 8px 12px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; background: var(--bg); font: 13.5px/1.55 var(--font-body); display: flex; flex-direction: column; gap: 4px; }
+.ann.star { border-left-color: var(--star-fg); }
+.ann .ah { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.ann .rid { font-family: var(--font-code); font-weight: 600; font-size: .82rem; }
+.ann .cause { font-size: .76rem; color: var(--star-fg); font-family: var(--font-code); }
+.fn-kind { font-family: var(--font-body); text-transform: none; letter-spacing: 0; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--same-bg); color: var(--same-fg); }
+.fn-kind.core { background: var(--star-bg); color: var(--star-fg); }
+.ann .tests { margin-left: auto; font-size: .76rem; color: var(--muted); font-family: var(--font-code); }
+.ann .ba { display: grid; grid-template-columns: 4.6em 1fr; gap: 8px; }
+.ann .ba .lab { font-size: .68rem; letter-spacing: .06em; color: var(--muted); font-family: var(--font-code); padding-top: 3px; }
+.ann .ba b { color: var(--star-fg); }
+.ann .actx { font-size: .82rem; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 4px; }
+.ann .actx b { color: var(--fg); font-weight: 500; }
 .diagrams { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 14px; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; min-width: 0; display: flex; flex-direction: column; gap: 8px; overflow-x: auto; }
 .mermaid { margin: 0; }
@@ -75,7 +80,7 @@ details pre { margin: 0; padding: 12px 14px; border-top: 1px solid var(--line); 
 .qs { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .qs li { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--warn-fg); border-radius: 6px; padding: 10px 14px; }
 .qs .q { font-weight: 500; }
-@media (max-width: 760px) { .cols, .diagrams { grid-template-columns: 1fr; } .col + .col { border-left: 0; border-top: 1px solid var(--line); } .row-h .tests { margin-left: 0; } }
+@media (max-width: 760px) { .diagrams { grid-template-columns: 1fr; } .ann { margin-left: 8px; } .ann .tests { margin-left: 0; } }
 </style>
 </head>
 <body>
@@ -95,25 +100,37 @@ details pre { margin: 0; padding: 12px 14px; border-top: 1px solid var(--line); 
 <section>
   <h2><span class="n">1</span>함수 범위</h2>
   <p class="muted"><code>git diff -W {{BASE}} {{HEAD}}</code> 에서 뽑았다.</p>
-  <ul><li><b>{{LETTER}}</b> <code>{{PATH}}::{{FUNCTION}}</code> — {{ONE_LINE}}</li><!-- REPEAT; list skipped functions with the reason --></ul>
+  <ul><li><b>{{LETTER}}</b> <code>{{PATH}}::{{FUNCTION}}</code> <span class="tag t-star">핵심</span> — {{ONE_LINE}}</li><!-- the tag only on core functions --><!-- REPEAT; list skipped functions with the reason --></ul>
 </section>
 
 <section>
   <h2><span class="n">2</span>줄 의미 diff</h2>
-  <p class="muted">후 버전의 줄 순서를 따른다. 테스트 id 는 5절 행렬에 있다.</p>
-  <!-- REPEAT per function: this eyebrow, then its rows -->
-  <span class="eyebrow">{{LETTER}} · {{PATH}}::{{FUNCTION}}</span>
-  <div class="rows">
-    <!-- REPEAT per row. Add class "star" to the article for ★ rows. Use <pre class="none">(없음)</pre> for an absent side.
-         Use class "del" / "add" on the pre when the text differs; plain <pre> when it is the same. -->
-    <article class="row">
-      <div class="row-h"><span class="rid">{{ROW_ID}}</span><span class="tag {{TAG_CLASS}}">{{TAG_LABEL}}</span><span class="tests">{{TEST_REFS}}</span></div>
-      <div class="cols">
-        <div class="col"><span class="lab">전</span><pre class="del">{{BEFORE_CODE}}</pre><span class="say">{{BEFORE_SENTENCE}}</span></div>
-        <div class="col"><span class="lab">후</span><pre class="add">{{AFTER_CODE}}</pre><span class="say">{{AFTER_SENTENCE}}</span></div>
-      </div>
-      <div class="ctx"><b>맥락:</b> {{OPTIONAL_CONTEXT — delete this div if none}}</div>
-    </article>
+  <p class="muted">후 버전의 줄 순서를 따른다. 거터: <code>+</code> 추가 · <code>-</code> 삭제 · <code>!</code> <b>글자 동일·뜻 변경 (★)</b> · 빈칸 동일 · <code>⋯</code> 접은 줄. 각 행의 설명은 그 행 마지막 줄 아래에 붙는다. 테스트 id 는 5절 행렬에 있다.</p>
+  <!-- REPEAT per function: this eyebrow, then one code block -->
+  <span class="eyebrow">{{LETTER}} · {{PATH}}::{{FUNCTION}}<span class="fn-kind core">핵심 — 메서드 전체</span></span>
+  <!-- peripheral: <span class="fn-kind">주변 — 동일 구간 접음</span> -->
+  <div class="dblk">
+    <!-- Lines in the after version's order; a removed line sits where it used to be. One div per source line:
+           ln add  +  after-only line (new, or the after side of changed / text only)
+           ln del  -  before-only line (removed, or the before side of changed / text only)
+           ln star !  every line of a ★ row (same text, new meaning)
+           ln same    unchanged line
+           ln fold ⋯  peripheral functions only (core functions show every line) — a run of same lines with no ★ candidate: `… what it does (N lines)`
+         A long body inside one row folds the same way but keeps that row's class and gutter (add + / del - / star !).
+         Code is HTML-escaped. Keep the source indentation; the block scrolls sideways, the notes stay put. -->
+    <div class="ln same"><span class="g"> </span><code>{{UNCHANGED_LINE}}</code></div>
+    <div class="ln del"><span class="g">-</span><code>{{BEFORE_LINE}}</code></div>
+    <div class="ln add"><span class="g">+</span><code>{{AFTER_LINE}}</code></div>
+    <div class="ln star"><span class="g">!</span><code>{{STAR_LINE}}</code></div>
+    <div class="ln fold"><span class="g">⋯</span><code>… {{WHAT_THE_RUN_DOES}} ({{N}}줄)</code></div>
+    <!-- REPEAT per row, right after the row's last line. Add class "star" for ★ rows. Every row that is not a
+         plain folded `same` run gets a note. Use one ba line (label empty) for new / same rows, both for
+         changed / removed / ★. Delete the actx div if there is no outside context. -->
+    <div class="ann star"><div class="ah"><span class="rid">{{ROW_ID}}</span><span class="tag {{TAG_CLASS}}">{{TAG_LABEL}}</span><span class="cause">원인: {{CAUSE_ROW_IDS — ★ rows only}}</span><span class="tests">{{TEST_REFS}}</span></div>
+      <div class="ba"><span class="lab">전</span><span>{{BEFORE_SENTENCE}}</span></div>
+      <div class="ba"><span class="lab">후</span><span>{{AFTER_SENTENCE}}</span></div>
+      <div class="actx"><b>맥락:</b> {{OPTIONAL_CONTEXT}}</div>
+    </div>
   </div>
 </section>
 
