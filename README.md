@@ -1,6 +1,6 @@
 # skills
 
-> Multilingual Claude Code skills. `dream` for memory consolidation, `session-seal` for resumable session snapshots, `session-retro` for gated session retrospectives, `to-html` for gated HTML visualization, `task-routine` for driving a checklist to commits with an autonomy dial.
+> Multilingual Claude Code skills. `dream` for memory consolidation, `session-seal` for resumable session snapshots, `session-retro` for gated session retrospectives, `to-html` for gated HTML visualization, `task-routine` for driving a checklist to commits with an autonomy dial, `meaning-diff` for reviewing what each line of a change means.
 
 A small, opinionated collection of [Claude Code](https://docs.claude.com/en/docs/claude-code) skills published as a single plugin. Each skill ships in two language variants — English and Korean — so the one that matches how you actually talk to your agent triggers cleanly.
 
@@ -31,6 +31,8 @@ cp -r skills/skills/to-html          ~/.claude/skills/to-html
 cp -r skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 cp -r skills/skills/task-routine     ~/.claude/skills/task-routine
 cp -r skills/skills/task-routine-ko  ~/.claude/skills/task-routine-ko
+cp -r skills/skills/meaning-diff     ~/.claude/skills/meaning-diff
+cp -r skills/skills/meaning-diff-ko  ~/.claude/skills/meaning-diff-ko
 ```
 
 PowerShell (Windows):
@@ -47,6 +49,8 @@ Copy-Item -Recurse skills/skills/to-html          ~/.claude/skills/to-html
 Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 Copy-Item -Recurse skills/skills/task-routine     ~/.claude/skills/task-routine
 Copy-Item -Recurse skills/skills/task-routine-ko  ~/.claude/skills/task-routine-ko
+Copy-Item -Recurse skills/skills/meaning-diff     ~/.claude/skills/meaning-diff
+Copy-Item -Recurse skills/skills/meaning-diff-ko  ~/.claude/skills/meaning-diff-ko
 ```
 
 ## Available skills
@@ -63,6 +67,8 @@ Copy-Item -Recurse skills/skills/task-routine-ko  ~/.claude/skills/task-routine-
 | `to-html-ko`       | ko   | Korean variant of `to-html`                                                        |
 | `task-routine`     | en   | Drives a task checklist to commits, one at a time, with an autonomy dial           |
 | `task-routine-ko`  | ko   | Korean variant of `task-routine`                                                   |
+| `meaning-diff`     | en   | Line-by-line meaning diff of a change — HTML review page or PR body, backed by tests |
+| `meaning-diff-ko`  | ko   | Korean variant of `meaning-diff`                                                  |
 
 ### `dream` — what it does
 
@@ -134,6 +140,25 @@ The distinguishing feature is the **autonomy dial**: `manual` / `assisted` (defa
 Every recommendation, choice, and outcome is appended to a decision log as its own line (never edited in place). `task-routine report` turns that log into a scorecard per decision point, and the agreement rate is computed only over decisions a *human* answered — including unattended ones would make the analysis prove that automating was fine because it was automated. Raising the dial is always the user's move.
 
 Override the state directory with `TASK_ROUTINE_DIR`. State lives outside the repo on purpose, so an unattended run cannot commit its own log.
+
+### `meaning-diff` — what it does
+
+A diff shows the lines whose text changed. A reviewer needs the lines whose **meaning** changed — and some of those kept their text: a new guard above an unchanged `return` changes when that `return` runs, but the `return` never appears in the diff. `meaning-diff` rebuilds each changed function as rows, one sentence per line for before and after, and tags every row on two axes:
+
+| | meaning same | meaning changed |
+|---|---|---|
+| only in after / before | — | `new` / `removed` |
+| text same | `same` | **`★ same text, new meaning`** |
+| text changed | `text only` | `changed` |
+
+plus `⚠` for rows whose correctness the diff cannot settle. Each tag is then backed by tests run on the before code, the after code, and up to three mutants; a tag without a run is printed as *(inferred)*, and a before-failure that only shows a missing parameter is called weak evidence rather than proof.
+
+| Mode | For | Output |
+|---|---|---|
+| `review <target>` (default) — a commit, range, branch, or `#PR` | a reviewer reading someone else's change | one self-contained HTML page: scope, line meaning diff, path diagram, context outside the diff, test matrix, questions for the author |
+| `pr [<base>]` | the author opening a PR | a GitHub PR body in Markdown: only the rows that are not `same`, the diagram, the test matrix, *answered before you ask*; posting it and committing the tests are separate opt-ins |
+
+On a trading bot's "don't close below the third entry" guard, the first prototype found that the position lookup returns `[]` on a database error, so the guard switched itself off exactly when the database wobbled — a ⚠ row backed by a test that pinned the silent fallback. Trials of the skill on the same commit went further than the prototype in two places: they confirmed the ★ rows through the unchanged caller (an assertion failure on the old code, not a missing-parameter error), and they caught a `close_all()` call that only moved from an `elif` into a nested `if` — a real `changed` row in Python that `git diff -w` reports as unchanged.
 
 ## Why ko / en variants?
 

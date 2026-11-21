@@ -1,7 +1,7 @@
 {
   "name": "kwangseok-seo-skills",
   "version": "0.1.0",
-  "description": "Curated Claude Code skills with Korean and English variants. Includes `dream` (memory consolidation pass), `session-seal` (resumable session snapshots), `session-retro` (gated session retrospective that prunes and publishes rules from a verdict ledger), `to-html` (gated HTML visualization of content), and `task-routine` (checklist-to-commit development loop with an autonomy dial).",
+  "description": "Curated Claude Code skills with Korean and English variants. Includes `dream` (memory consolidation pass), `session-seal` (resumable session snapshots), `session-retro` (gated session retrospective that prunes and publishes rules from a verdict ledger), `to-html` (gated HTML visualization of content), `task-routine` (checklist-to-commit development loop with an autonomy dial), and `meaning-diff` (line-by-line meaning diff of a code change, as a review page or a PR body).",
   "author": {
     "name": "Kwangseok-Seo",
     "email": "adman1219@icloud.com",
@@ -25,6 +25,9 @@
     "automation",
     "autonomy",
     "checklist",
+    "code-review",
+    "diff",
+    "pull-request",
     "korean",
     "ko-en"
   ],
@@ -38,6 +41,8 @@
     "./skills/to-html",
     "./skills/to-html-ko",
     "./skills/task-routine",
-    "./skills/task-routine-ko"
+    "./skills/task-routine-ko",
+    "./skills/meaning-diff",
+    "./skills/meaning-diff-ko"
   ]
 }

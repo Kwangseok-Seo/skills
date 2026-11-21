@@ -1,0 +1,179 @@
+<!doctype html>
+<!--
+  meaning-diff 리뷰 페이지 템플릿 (한국어).
+  Replace every {{PLACEHOLDER}}. Repeat the blocks marked REPEAT. Delete these comments.
+  Tag classes: t-new · t-removed · t-text · t-changed · t-star · t-same · t-warn
+  Code is HTML-escaped (&lt; &gt; &amp;).
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{SHORT_SHA}} 의미 리뷰</title>
+<style>
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --fg: #1b2230; --muted: #5b6577; --line: #dde1e8; --code-bg: #eef1f5; --accent: #2f5bd3;
+  --del-bg: #fde8e8; --del-fg: #a3262b; --add-bg: #e3f4e8; --add-fg: #1d6b3a;
+  --star-bg: #fff2d6; --star-fg: #8a5a00; --warn-bg: #fde6dc; --warn-fg: #9c3b12; --same-bg: #eceff3; --same-fg: #4a5466;
+  --font-body: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --font-code: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #12161d; --surface: #1a1f28; --fg: #e3e7ee; --muted: #9aa4b5; --line: #2c3340; --code-bg: #232a35; --accent: #7d9cf0;
+  --del-bg: #3a1e22; --del-fg: #f2a5a8; --add-bg: #17331f; --add-fg: #8fd6a5;
+  --star-bg: #3a2e12; --star-fg: #f0c36a; --warn-bg: #3d2318; --warn-fg: #f2a37e; --same-bg: #262c36; --same-fg: #b3bccb; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.6 var(--font-body); }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 32px 16px 64px; display: flex; flex-direction: column; gap: 40px; }
+h1, h2 { margin: 0; line-height: 1.3; } h1 { font-size: 1.6rem; } h2 { font-size: 1.2rem; display: flex; gap: 10px; align-items: baseline; }
+h2 .n { font-family: var(--font-code); color: var(--accent); font-size: .95rem; }
+p { margin: 0; max-width: 72ch; }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+code { font-family: var(--font-code); font-size: .85rem; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+.muted { color: var(--muted); }
+.eyebrow { font-family: var(--font-code); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.head { display: flex; flex-direction: column; gap: 10px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: .88rem; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag { display: inline-flex; align-items: center; font-size: .78rem; font-weight: 500; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.t-new { background: var(--add-bg); color: var(--add-fg); } .t-removed { background: var(--del-bg); color: var(--del-fg); }
+.t-text, .t-same { background: var(--same-bg); color: var(--same-fg); } .t-changed { background: var(--add-bg); color: var(--add-fg); }
+.t-star { background: var(--star-bg); color: var(--star-fg); } .t-warn { background: var(--warn-bg); color: var(--warn-fg); }
+.rows { display: flex; flex-direction: column; gap: 10px; }
+.row { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.row.star { border-color: var(--star-fg); }
+.row-h { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
+.row-h .rid { font-family: var(--font-code); font-weight: 500; font-size: .85rem; }
+.row-h .tests { margin-left: auto; font-size: .78rem; color: var(--muted); font-family: var(--font-code); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; }
+.col { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.col + .col { border-left: 1px solid var(--line); }
+.col .lab { font-size: .72rem; letter-spacing: .06em; color: var(--muted); font-family: var(--font-code); }
+.col pre { margin: 0; font: .82rem var(--font-code); white-space: pre-wrap; word-break: break-word; padding: 6px 8px; border-radius: 4px; background: var(--code-bg); }
+.col pre.del { background: var(--del-bg); color: var(--del-fg); } .col pre.add { background: var(--add-bg); color: var(--add-fg); }
+.col pre.none { background: transparent; color: var(--muted); font-style: italic; padding-left: 0; }
+.col .say b { color: var(--star-fg); }
+.ctx { padding: 8px 14px; border-top: 1px dashed var(--line); font-size: .85rem; color: var(--muted); }
+.ctx b { color: var(--fg); font-weight: 500; }
+.diagrams { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 14px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; min-width: 0; display: flex; flex-direction: column; gap: 8px; overflow-x: auto; }
+.mermaid { margin: 0; }
+.ctx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.panel pre.src { margin: 0; font: .8rem var(--font-code); background: var(--code-bg); padding: 10px; border-radius: 4px; overflow-x: auto; }
+.panel pre.src .hl { background: var(--warn-bg); color: var(--warn-fg); }
+.tbl-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: .86rem; }
+th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .75rem; letter-spacing: .05em; color: var(--muted); font-weight: 500; white-space: nowrap; }
+td.c { text-align: center; white-space: nowrap; } tr:last-child td { border-bottom: 0; }
+.pass { color: var(--add-fg); font-weight: 500; } .fail { color: var(--del-fg); font-weight: 500; }
+.why { display: block; font-size: .74rem; color: var(--muted); font-weight: 400; }
+tfoot td { font-family: var(--font-code); font-weight: 500; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
+details pre { margin: 0; padding: 12px 14px; border-top: 1px solid var(--line); font: .8rem var(--font-code); overflow-x: auto; background: var(--code-bg); }
+.qs { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.qs li { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--warn-fg); border-radius: 6px; padding: 10px 14px; }
+.qs .q { font-weight: 500; }
+@media (max-width: 760px) { .cols, .diagrams { grid-template-columns: 1fr; } .col + .col { border-left: 0; border-top: 1px solid var(--line); } .row-h .tests { margin-left: 0; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="head">
+  <span class="eyebrow">줄 의미 리뷰 · {{REPO_NAME}}</span>
+  <h1><code>{{SHORT_SHA_OR_PR}}</code> {{FUNCTION_OR_TITLE}}</h1>
+  <div class="meta"><span>{{COMMIT_SUBJECT}}</span><span>{{FILE}} +{{ADDED}} −{{REMOVED}}</span><span>맥락 파일: {{CONTEXT_FILES}}</span></div>
+  <p>{{ONE_PARAGRAPH: what the reader is looking at and the headline finding}}</p>
+  <div class="legend">
+    <span class="tag t-new">신규</span><span class="tag t-removed">삭제</span><span class="tag t-text">글자만 변경</span>
+    <span class="tag t-changed">변경</span><span class="tag t-star">★ 글자 동일·뜻 변경</span><span class="tag t-same">동일</span><span class="tag t-warn">⚠ 작성자에게 물을 것</span>
+  </div>
+</header>
+
+<section>
+  <h2><span class="n">1</span>함수 범위</h2>
+  <p class="muted"><code>git diff -W {{BASE}} {{HEAD}}</code> 에서 뽑았다.</p>
+  <ul><li><b>{{LETTER}}</b> <code>{{PATH}}::{{FUNCTION}}</code> — {{ONE_LINE}}</li><!-- REPEAT; list skipped functions with the reason --></ul>
+</section>
+
+<section>
+  <h2><span class="n">2</span>줄 의미 diff</h2>
+  <p class="muted">후 버전의 줄 순서를 따른다. 테스트 id 는 5절 행렬에 있다.</p>
+  <!-- REPEAT per function: this eyebrow, then its rows -->
+  <span class="eyebrow">{{LETTER}} · {{PATH}}::{{FUNCTION}}</span>
+  <div class="rows">
+    <!-- REPEAT per row. Add class "star" to the article for ★ rows. Use <pre class="none">(없음)</pre> for an absent side.
+         Use class "del" / "add" on the pre when the text differs; plain <pre> when it is the same. -->
+    <article class="row">
+      <div class="row-h"><span class="rid">{{ROW_ID}}</span><span class="tag {{TAG_CLASS}}">{{TAG_LABEL}}</span><span class="tests">{{TEST_REFS}}</span></div>
+      <div class="cols">
+        <div class="col"><span class="lab">전</span><pre class="del">{{BEFORE_CODE}}</pre><span class="say">{{BEFORE_SENTENCE}}</span></div>
+        <div class="col"><span class="lab">후</span><pre class="add">{{AFTER_CODE}}</pre><span class="say">{{AFTER_SENTENCE}}</span></div>
+      </div>
+      <div class="ctx"><b>맥락:</b> {{OPTIONAL_CONTEXT — delete this div if none}}</div>
+    </article>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">3</span>경로 그림</h2>
+  <p class="muted">초록은 새 경로나 바뀐 경로, 노랑은 글자는 그대로인데 도달 조건이 바뀐 노드, 점선은 다른 파일에서 들어오는 맥락이다.</p>
+  <div class="diagrams">
+    <div class="panel"><span class="eyebrow">전</span><pre class="mermaid">
+flowchart TD
+  {{BEFORE_FLOW}}
+</pre></div>
+    <div class="panel"><span class="eyebrow">후</span><pre class="mermaid">
+flowchart TD
+  {{AFTER_FLOW}}
+  %% outside context: X["DB error → []"]:::warn -.-> C
+  classDef new fill:#d6f0de,stroke:#1d6b3a,color:#123d22
+  classDef changed fill:#d6f0de,stroke:#1d6b3a,color:#123d22
+  classDef star fill:#ffe8b0,stroke:#8a5a00,color:#4a3000
+  classDef warn fill:#fbd9c8,stroke:#9c3b12,color:#5a200a,stroke-dasharray:4 3
+</pre></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">4</span>diff 밖의 맥락</h2>
+  <p class="muted">{{WHICH_ROWS_DEPEND_ON_THESE}}</p>
+  <div class="ctx-grid">
+    <!-- REPEAT per caller / producer. Wrap the deciding token in <span class="hl">. -->
+    <div class="panel"><span class="eyebrow">{{FILE}} · {{ROLE: caller | producer}}</span><pre class="src">{{EXCERPT}}</pre><p>{{WHAT_IT_DECIDES}}</p></div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">5</span>테스트 행렬</h2>
+  <p class="muted">같은 테스트를 전 코드, 후 코드, 그리고 변이마다 한 열({{MUTANT_LIST: mutant-1 = A5 행, recent[2] → recent[0]; …}})에 돌렸다. ★ / 신규 / 변경은 전 FAIL·후 PASS, 동일 / 글자만 변경은 양쪽 PASS 여야 증거다. 후는 전부 통과해야 한다. stub 한 모듈: {{STUBS 또는 없음}}.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Id</th><th>테스트</th><th>행</th><th>입력 → 기대</th><th>전 ({{BASE}})</th><th>후 ({{HEAD}})</th><th>mutant-1</th><!-- REPEAT th per mutant --></tr></thead>
+    <tbody>
+      <!-- REPEAT per test. Cell: <td class="c pass">PASS</td> or <td class="c fail">FAIL<span class="why">TypeError</span></td>; empty cell + reason when not run. -->
+      <tr><td>{{T_ID}}</td><td><code>{{TEST_NAME}}</code></td><td><span class="tag {{TAG_CLASS}}">{{ROW_REF}}</span></td><td>{{INPUT_EXPECTED}}</td><td class="c fail">FAIL<span class="why">{{REASON}}</span></td><td class="c pass">PASS</td><td class="c fail">FAIL<span class="why">잡음</span></td><!-- REPEAT per mutant; PASS = 못 잡음 --></tr>
+    </tbody>
+    <tfoot><tr><td colspan="4">합계</td><td class="c">{{BEFORE_TOTAL}}</td><td class="c">{{AFTER_TOTAL}}</td><td class="c">{{MUTANT_1_TOTAL}}</td><!-- REPEAT per mutant --></tr></tfoot>
+  </table></div>
+  <p><b>읽는 법.</b> {{WHICH_EVIDENCE_IS_WEAK_AND_WHAT_THE_MUTATION_SHOWED}}</p>
+  <details><summary>테스트 코드 전체</summary><pre>{{TEST_CODE}}</pre></details>
+</section>
+
+<section>
+  <h2><span class="n">6</span>작성자에게 물을 것</h2>
+  <ul class="qs">
+    <!-- REPEAT per ⚠ row -->
+    <li><div class="q">{{QUESTION}}</div><span class="muted">{{WHAT_HAPPENS_NOW_AND_WHY_IT_MIGHT_BE_WRONG}}</span></li>
+  </ul>
+</section>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, securityLevel: 'strict',
+    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });
+</script>
+</body>
+</html>
