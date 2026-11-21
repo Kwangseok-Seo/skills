@@ -1,6 +1,6 @@
 # skills
 
-> 다국어 Claude Code skills 모음. 메모리 통합용 `dream`, 이어받기 가능한 세션 봉인용 `session-seal`, GATE 기반 세션 회고용 `session-retro`, 가치 판정 후 HTML 시각화 변환용 `to-html`, 자율성 다이얼로 체크리스트를 커밋까지 몰고 가는 `task-routine`.
+> 다국어 Claude Code skills 모음. 메모리 통합용 `dream`, 이어받기 가능한 세션 봉인용 `session-seal`, GATE 기반 세션 회고용 `session-retro`, 가치 판정 후 HTML 시각화 변환용 `to-html`, 자율성 다이얼로 체크리스트를 커밋까지 몰고 가는 `task-routine`, 변경의 줄마다 뜻을 비교하는 `meaning-diff`.
 
 [Claude Code](https://docs.claude.com/en/docs/claude-code) 용 skills 모음을 단일 plugin 으로 publish 한 저장소. 각 skill 은 영어판과 한국어판 두 변형으로 제공되어, 실제로 에이전트에게 말하는 언어에 맞춰 깔끔하게 트리거된다.
 
@@ -31,6 +31,8 @@ cp -r skills/skills/to-html          ~/.claude/skills/to-html
 cp -r skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 cp -r skills/skills/task-routine     ~/.claude/skills/task-routine
 cp -r skills/skills/task-routine-ko  ~/.claude/skills/task-routine-ko
+cp -r skills/skills/meaning-diff     ~/.claude/skills/meaning-diff
+cp -r skills/skills/meaning-diff-ko  ~/.claude/skills/meaning-diff-ko
 ```
 
 PowerShell (Windows):
@@ -47,6 +49,8 @@ Copy-Item -Recurse skills/skills/to-html          ~/.claude/skills/to-html
 Copy-Item -Recurse skills/skills/to-html-ko       ~/.claude/skills/to-html-ko
 Copy-Item -Recurse skills/skills/task-routine     ~/.claude/skills/task-routine
 Copy-Item -Recurse skills/skills/task-routine-ko  ~/.claude/skills/task-routine-ko
+Copy-Item -Recurse skills/skills/meaning-diff     ~/.claude/skills/meaning-diff
+Copy-Item -Recurse skills/skills/meaning-diff-ko  ~/.claude/skills/meaning-diff-ko
 ```
 
 ## 제공 Skills
@@ -63,6 +67,8 @@ Copy-Item -Recurse skills/skills/task-routine-ko  ~/.claude/skills/task-routine-
 | `to-html-ko`       | ko   | `to-html` 의 한국어 변형                                                            |
 | `task-routine`     | en   | 작업 체크리스트를 하나씩 커밋까지 몰고 가는 개발 루프 (자율성 다이얼 포함)          |
 | `task-routine-ko`  | ko   | `task-routine` 의 한국어 변형                                                       |
+| `meaning-diff`     | en   | 변경의 줄마다 전/후 뜻을 비교 — HTML 리뷰 페이지 또는 PR 본문, 테스트로 뒷받침      |
+| `meaning-diff-ko`  | ko   | `meaning-diff` 의 한국어 변형                                                       |
 
 ### `dream` 이 무엇을 하는가
 
@@ -134,6 +140,25 @@ Why / How 는 미래 세션이 즉시 이어받게 해주는 두 줄 abstraction
 모든 추천·선택·결과는 결정 로그에 각각 한 줄로 append 된다(제자리 수정 없음). `task-routine report` 가 그 로그를 결정 지점별 성적표로 바꾸는데, 동의율은 **사람이 답한 결정만** 세고 계산한다 — 무인 실행된 것을 넣으면 "자동화했으니 자동화해도 됐다" 를 증명하는 분석이 된다. 다이얼을 올리는 것은 언제나 사용자의 몫이다.
 
 상태 디렉토리는 `TASK_ROUTINE_DIR` 로 override. 상태를 repo 밖에 두는 것은 의도다 — 무인 실행이 자기 로그를 커밋할 수 있으면 안 된다.
+
+### `meaning-diff` 가 무엇을 하는가
+
+diff 는 글자가 바뀐 줄을 보여 준다. 리뷰어에게 필요한 것은 **뜻**이 바뀐 줄이고, 그중엔 글자가 그대로인 줄도 있다: 안 바뀐 `return` 위에 새 가드가 생기면 그 `return` 이 언제 실행되는지가 바뀌지만, 그 `return` 은 diff 에 나오지 않는다. `meaning-diff` 는 바뀐 함수를 행으로 다시 짓고 줄마다 전/후 문장을 하나씩 적은 뒤, 모든 행에 두 축으로 태그를 붙인다:
+
+| | 뜻 동일 | 뜻 변경 |
+|---|---|---|
+| 후에만 / 전에만 있음 | — | `신규` / `삭제` |
+| 글자 동일 | `동일` | **`★ 글자 동일·뜻 변경`** |
+| 글자 변경 | `글자만 변경` | `변경` |
+
+여기에 diff 만으로는 옳고 그름이 정해지지 않는 행에 `⚠` 를 단다. 각 태그는 전 코드, 후 코드, 최대 세 개의 변이 코드에 돌린 테스트로 뒷받침한다; 돌리지 않은 태그는 *(추정)* 으로 찍고, 매개변수가 없어서 난 전 코드 실패는 증명이 아니라 약한 증거로 부른다.
+
+| 모드 | 누구를 위해 | 출력 |
+|---|---|---|
+| `review <대상>` (기본) — 커밋, 범위, 브랜치, `#PR` | 남의 변경을 읽는 리뷰어 | 단일 HTML 페이지: 범위, 줄 의미 diff, 경로 그림, diff 밖의 맥락, 테스트 행렬, 작성자에게 물을 것 |
+| `pr [<base>]` | PR 을 여는 작성자 | GitHub PR 본문 Markdown: `동일` 이 아닌 행만, 그림, 테스트 행렬, *묻기 전에 답함*; 게시와 테스트 커밋은 각각 따로 승인 |
+
+트레이딩 봇의 "세 번째 진입가 아래에선 청산하지 않는다" 가드에서, 첫 시제품은 포지션 조회가 DB 오류 때 `[]` 를 돌려줘 DB 가 흔들리는 바로 그 순간 가드가 스스로 꺼진다는 것을 찾았다 — 조용한 폴백을 고정한 테스트가 뒷받침하는 ⚠ 행이다. 같은 커밋에 스킬을 시험 실행해 보니 두 곳에서 시제품보다 나아갔다: ★ 행을 안 바뀐 호출부를 통해 확인했고(매개변수 부재 에러가 아니라 옛 코드의 단언 실패), `elif` 에서 중첩 `if` 안으로 옮겨지기만 한 `close_all()` 호출을 잡았다 — 파이썬에선 진짜 `변경` 행인데 `git diff -w` 는 안 바뀐 것으로 보고한다.
 
 ## 왜 ko / en 을 따로 분리했나?
 
